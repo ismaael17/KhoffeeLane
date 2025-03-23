@@ -1,0 +1,213 @@
+{% extends "admin/layout.html" %}
+
+{% block admin_content %}
+<div class="container-fluid">
+    <h1 class="h3 mb-4">Dashboard</h1>
+    
+    <!-- Statistics cards -->
+    <div class="row">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Orders
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_orders }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Pending Orders
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ pending_orders }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-hourglass-half fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Preparing Orders
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ preparing_orders }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-coffee fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Ready Orders
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ ready_orders }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Recent Orders -->
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Recent Orders</h6>
+                    <a href="{{ url_for('admin.orders') }}" class="btn btn-sm btn-primary shadow-sm">
+                        View All Orders
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if recent_orders %}
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Customer</th>
+                                    <th>Status</th>
+                                    <th>Total</th>
+                                    <th>Date</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in recent_orders %}
+                                <tr>
+                                    <td><a href="{{ url_for('admin.orders') }}">{{ order.order_id }}</a></td>
+                                    <td>{{ order.user.full_name }}</td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if order.status == 'pending' %}bg-warning text-dark
+                                            {% elif order.status == 'preparing' %}bg-info
+                                            {% elif order.status == 'ready' %}bg-primary
+                                            {% elif order.status == 'completed' %}bg-success
+                                            {% elif order.status == 'cancelled' %}bg-danger
+                                            {% endif %}">
+                                            {{ order.status|capitalize }}
+                                        </span>
+                                    </td>
+                                    <td>${{ order.total|round(2) }}</td>
+                                    <td>{{ order.created_at.strftime('%m/%d/%Y %I:%M %p') }}</td>
+                                    <td>
+                                        <a href="{{ url_for('admin.orders') }}" class="btn btn-sm btn-outline-primary">Details</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-coffee fa-3x text-muted mb-3"></i>
+                        <p>No orders yet.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Featured Coffee Items -->
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Featured Coffee Items</h6>
+                    <a href="{{ url_for('admin.menu') }}" class="btn btn-sm btn-primary shadow-sm">
+                        Manage Menu
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if top_coffees %}
+                    <div class="list-group">
+                        {% for coffee in top_coffees %}
+                        <div class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ coffee.name }}</h6>
+                                <small>${{ coffee.price|round(2) }}</small>
+                            </div>
+                            <p class="mb-1 small text-muted">{{ coffee.description|truncate(60) }}</p>
+                            <div class="d-flex justify-content-end">
+                                <a href="{{ url_for('admin.edit_coffee', id=coffee.id) }}" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-mug-hot fa-3x text-muted mb-3"></i>
+                        <p>No featured coffee items yet.</p>
+                        <a href="{{ url_for('admin.new_coffee') }}" class="btn btn-primary">Add New Coffee</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            {% if current_user.is_admin %}
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <a href="{{ url_for('admin.menu') }}" class="btn btn-block btn-outline-primary w-100">
+                                <i class="fas fa-coffee me-2"></i>Menu
+                            </a>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <a href="{{ url_for('admin.users') }}" class="btn btn-block btn-outline-primary w-100">
+                                <i class="fas fa-users me-2"></i>Users
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a href="{{ url_for('admin.new_coffee') }}" class="btn btn-block btn-outline-primary w-100">
+                                <i class="fas fa-plus me-2"></i>Add Coffee
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a href="#" class="btn btn-block btn-outline-primary w-100">
+                                <i class="fas fa-cog me-2"></i>Settings
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

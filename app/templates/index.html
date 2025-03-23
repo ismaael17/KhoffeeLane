@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section" style="background-image: url('{{ url_for('static', filename='img/background.jpg') }}');">
+    <div class="container">
+        <div class="hero-content">
+            <h1 class="hero-title">Family Coffee Shop</h1>
+            <p class="hero-subtitle">Your favorite coffee, made just the way you like it.</p>
+        </div>
+    </div>
+</section>
+
+<!-- Selection Paths Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <h2 class="text-center mb-4">How Would You Like to Order?</h2>
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="card h-100 selection-path-card">
+                    <div class="card-body text-center">
+                        <img src="{{ url_for('static', filename='img/coffee-cup.png') }}" alt="Coffee Drink" class="img-fluid mb-3" style="max-height: 150px;">
+                        <h3>I Know What I Want</h3>
+                        <p class="text-muted">Go straight to our menu of prepared coffee drinks</p>
+                        <a href="{{ url_for('main.menu') }}" class="btn btn-primary btn-lg mt-3">
+                            <i class="fas fa-mug-hot me-2"></i>Browse Coffee Drinks
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="card h-100 selection-path-card">
+                    <div class="card-body text-center">
+                        <img src="{{ url_for('static', filename='img/coffee-beans.png') }}" alt="Coffee Beans" class="img-fluid mb-3" style="max-height: 150px;">
+                        <h3>Help Me Explore</h3>
+                        <p class="text-muted">Start by choosing a coffee bean and discover recommended brewing methods</p>
+                        <a href="{{ url_for('main.beans') }}" class="btn btn-primary btn-lg mt-3">
+                            <i class="fas fa-seedling me-2"></i>Browse Coffee Beans
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Coffees -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-4">Family Favorites</h2>
+        <p class="text-center text-muted mb-5">These coffee drinks are our family's most loved choices.</p>
+        
+        <div class="row">
+            {% for coffee in featured_coffees %}
+            <div class="col-md-4">
+                <div class="coffee-card" data-id="{{ coffee.id }}" data-price="{{ coffee.price }}">
+                    <div class="coffee-img-container">
+                        <img src="{{ url_for('static', filename='img/' + coffee.image) }}" alt="{{ coffee.name }}" class="coffee-img">
+                        <span class="coffee-badge">Family Favorite</span>
+                    </div>
+                    <div class="card-body">
+                        <h3 class="coffee-title">{{ coffee.name }}</h3>
+                        <p class="coffee-desc">{{ coffee.description }}</p>
+                        
+                        <div class="d-flex align-items-center mb-3">
+                            <span class="coffee-price">${{ "%.2f"|format(coffee.price) }}</span>
+                            <div class="ms-auto">
+                                {% if coffee.flavors %}
+                                    {% set flavor_list = coffee.flavors.split(',') %}
+                                    {% for flavor in flavor_list %}
+                                        <span class="flavor-profile">{{ flavor.strip() }}</span>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <a href="{{ url_for('main.menu') }}#coffee-{{ coffee.id }}" class="btn btn-primary w-100">
+                            <i class="fas fa-info-circle me-2"></i>View Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- How It Works -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <h2 class="text-center mb-4">How It Works</h2>
+        <p class="text-center text-muted mb-5">Order your favorite coffee in three simple steps.</p>
+        
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <h3 class="feature-title">1. Select Family Member</h3>
+                    <p>Choose your name from the dropdown menu so we know who's ordering.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-coffee"></i>
+                    </div>
+                    <h3 class="feature-title">2. Customize Your Coffee</h3>
+                    <p>Choose your favorite coffee, size, milk, sugar, and any extras.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h3 class="feature-title">3. Place Your Order</h3>
+                    <p>Review your order and submit. We'll start brewing immediately!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Coffee Hours & Special Notes -->
+<section class="py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-6 mb-4 mb-md-0">
+                <h2 class="mb-4">Coffee Hours</h2>
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-3">
+                            <strong>Weekdays (Mon-Fri)</strong>
+                            <span>6:00 AM - 8:00 PM</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-3">
+                            <strong>Weekends (Sat-Sun)</strong>
+                            <span>7:00 AM - 9:00 PM</span>
+                        </div>
+                        <hr>
+                        <p class="mb-0 text-center fst-italic">
+                            <i class="fas fa-info-circle me-2"></i>Special requests available during coffee hours.
+                        </p>
+                    </div>
+                </div>
+            </div>
+    </div>
+</section>
+
+<!-- Toast container for notifications -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3"></div>
+{% endblock %}

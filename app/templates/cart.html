@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <h1 class="mb-4">Your Coffee Cart</h1>
+        
+        <!-- Empty cart message -->
+        <div id="empty-cart-message" class="text-center py-5">
+            <i class="fas fa-shopping-cart fa-3x mb-3 text-muted"></i>
+            <h3>Your cart is empty</h3>
+            <p class="text-muted">Add some delicious coffee drinks to your cart.</p>
+            <a href="{{ url_for('main.menu') }}" class="btn btn-primary mt-3">Browse Coffee Menu</a>
+        </div>
+        
+        <!-- Cart content -->
+        <div id="cart-content" class="d-none">
+            <div class="row">
+                <div class="col-lg-8">
+                    <!-- Cart items container -->
+                    <div id="cart-items" class="card mb-4">
+                        <div class="card-body p-0">
+                            <!-- Cart items will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <!-- Order summary -->
+                    <div class="card cart-summary mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">Order Summary</h5>
+                            <hr>
+                            <div class="d-flex justify-content-between mb-3">
+                                <span>Total</span>
+                                <span id="cart-total" class="cart-total">$0.00</span>
+                            </div>
+                            <hr>
+                            <form id="order-form" method="post" action="{{ url_for('main.order') }}">
+                                <div class="mb-3">
+                                    <label class="form-label">Ordering For</label>
+                                    <input type="text" id="family-member-display" class="form-control" readonly>
+                                    <input type="hidden" name="family_member" id="family-member-input">
+                                    <div class="form-text">Please select your name from the dropdown in the top menu.</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="order-notes" class="form-label">Order Notes</label>
+                                    <textarea class="form-control" id="order-notes" name="notes" rows="3" placeholder="Any additional instructions?"></textarea>
+                                </div>
+                                <input type="hidden" name="cart_items" id="cart-items-input">
+                                <input type="hidden" name="total" id="cart-total-input">
+                                <button type="button" id="place-order-btn" class="btn btn-primary w-100">
+                                    <i class="fas fa-check-circle me-2"></i>Place Order
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Continue shopping -->
+                    <a href="{{ url_for('main.menu') }}" class="btn btn-outline-primary w-100">
+                        <i class="fas fa-arrow-left me-2"></i>Continue Shopping
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Cart item template -->
+<template id="cart-item-template">
+    <div class="cart-item" data-id="{id}">
+        <div class="row align-items-center">
+            <div class="col-3 col-md-2">
+                <img src="{image}" alt="{name}" class="cart-item-img img-fluid">
+            </div>
+            <div class="col-9 col-md-4">
+                <h5 class="cart-item-title">{name}</h5>
+                <div class="cart-item-options">{options}</div>
+            </div>
+            <div class="col-6 col-md-2 mt-3 mt-md-0">
+                <div class="input-group input-group-sm">
+                    <button class="btn btn-outline-secondary decrease-quantity" type="button">-</button>
+                    <input type="number" class="form-control text-center item-quantity" value="{quantity}" min="1" data-id="{id}">
+                    <button class="btn btn-outline-secondary increase-quantity" type="button">+</button>
+                </div>
+            </div>
+            <div class="col-3 col-md-2 text-center mt-3 mt-md-0">
+                <span class="cart-item-price">${price}</span>
+            </div>
+            <div class="col-3 col-md-2 text-end mt-3 mt-md-0">
+                <button class="btn btn-sm btn-outline-danger remove-from-cart" data-id="{id}">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</template>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Update family member display
+    const familyMember = getFamilyMember();
+    document.getElementById('family-member-display').value = familyMember || 'Select a family member';
+    document.getElementById('family-member-input').value = familyMember || '';
+    
+    // Load cart items
+    loadCartItems();
+    
+    // Update cart total
+    updateCartTotal();
+    
+    // Check if cart is empty
+    checkEmptyCart();
+    
+    // Setup event listener for place order button
+    document.getElementById('place-order-btn').addEventListener('click', function() {
+        const familyMember = getFamilyMember();
+        if (!familyMember || familyMember === 'Select Family Member') {
+            showToast('Please select a family member first!', 'warning');
+            return;
+        }
+        
+        const cart = getCart();
+        if (cart.length === 0) {
+            showToast('Your cart is empty!', 'warning');
+            return;
+        }
+        
+        // Set form data
+        document.getElementById('cart-items-input').value = JSON.stringify(cart);
+        const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        document.getElementById('cart-total-input').value = total.toFixed(2);
+        
+        // Submit the form
+        document.getElementById('order-form').submit();
+    });
+    
+    // Listen for quantity changes and removals
+    document.addEventListener('click', function(e) {
+        // Decrease quantity
+        if (e.target.classList.contains('decrease-quantity')) {
+            const quantityInput = e.target.parentElement.querySelector('.item-quantity');
+            let quantity = parseInt(quantityInput.value);
+            if (quantity > 1) {
+                quantity--;
+                quantityInput.value = quantity;
+                
+                // Update cart
+                const id = quantityInput.getAttribute('data-id');
+                updateCartItemQuantity(id, quantity);
+            }
+        }
+        
+        // Increase quantity
+        if (e.target.classList.contains('increase-quantity')) {
+            const quantityInput = e.target.parentElement.querySelector('.item-quantity');
+            let quantity = parseInt(quantityInput.value);
+            quantity++;
+            quantityInput.value = quantity;
+            
+            // Update cart
+            const id = quantityInput.getAttribute('data-id');
+            updateCartItemQuantity(id, quantity);
+        }
+    });
+});
+
+function loadCartItems() {
+    const cart = getCart();
+    const cartItemsContainer = document.getElementById('cart-items');
+    const template = document.getElementById('cart-item-template').innerHTML;
+    
+    // Clear container
+    cartItemsContainer.innerHTML = '';
+    
+    // Add items
+    cart.forEach(item => {
+        let optionsText = [];
+        
+        if (item.options.size) {
+            optionsText.push(`Size: ${item.options.size.charAt(0).toUpperCase() + item.options.size.slice(1)}`);
+        }
+        
+        if (item.options.milk) {
+            optionsText.push(`Milk: ${item.options.milk.charAt(0).toUpperCase() + item.options.milk.slice(1)}`);
+        }
+        
+        if (item.options.sugar) {
+            optionsText.push(`Sugar: ${item.options.sugar.charAt(0).toUpperCase() + item.options.sugar.slice(1)}`);
+        }
+        
+        if (item.options.extras && item.options.extras.length > 0) {
+            optionsText.push(`Extras: ${item.options.extras.map(extra => extra.name).join(', ')}`);
+        }
+        
+        if (item.options.notes) {
+            optionsText.push(`Notes: ${item.options.notes}`);
+        }
+        
+        let itemHtml = template
+            .replace(/{id}/g, item.id)
+            .replace(/{image}/g, item.image)
+            .replace(/{name}/g, item.name)
+            .replace(/{quantity}/g, item.quantity)
+            .replace(/{price}/g, item.price.toFixed(2))
+            .replace(/{options}/g, optionsText.join('<br>'));
+        
+        // Create temporary container to convert string to DOM elements
+        const temp = document.createElement('div');
+        temp.innerHTML = itemHtml;
+        
+        // Append to cart items container
+        cartItemsContainer.appendChild(temp.firstElementChild);
+    });
+}
+</script>
+{% endblock %}
+{% endblock %}

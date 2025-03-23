@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    
+        
+            
+                
+            
+            
+                {{ coffee.name }}
+                {{ coffee.description }}
+                
+                
+                    {% if coffee.flavors %}
+                        {% set flavor_list = coffee.flavors.split(',') %}
+                        {% for flavor in flavor_list %}
+                            {{ flavor.strip() }}
+                        {% endfor %}
+                    {% endif %}
+                
+            
+        
+    
+
+
+
+    
+        
+            
+                
+                    
+                        Bean Details
+                    
+                    
+                        
+                            {% if coffee.bean_origin %}
+                            
+                                Origin
+                                {{ coffee.bean_origin }}
+                            
+                            {% endif %}
+                            
+                            {% if coffee.bean_type %}
+                            
+                                Bean Type
+                                {{ coffee.bean_type|capitalize }}
+                            
+                            {% endif %}
+                            
+                            {% if coffee.roast_level %}
+                            
+                                Roast Level
+                                {{ coffee.roast_level|replace('_', '-')|capitalize }}
+                            
+                            {% endif %}
+                            
+                            {% if coffee.processing_method %}
+                            
+                                Processing
+                                {{ coffee.processing_method|replace('_', '-')|capitalize }}
+                            
+                            {% endif %}
+                        
+                    
+                
+                
+                
+                    
+                        Flavor Profile
+                    
+                    
+                        {% if coffee.flavor_notes %}
+                        {{ coffee.flavor_notes }}
+                        {% endif %}
+                        
+                        
+                            {% if coffee.acidity %}
+                            
+                                Acidity
+                                
+                                    
+                                        
+                                    
+                                
+                                {{ coffee.acidity|replace('_', '-')|capitalize }}
+                            
+                            {% endif %}
+                            
+                            {% if coffee.body %}
+                            
+                                Body
+                                
+                                    
+                                        
+                                    
+                                
+                                {{ coffee.body|replace('_', '-')|capitalize }}
+                            
+                            {% endif %}
+                            
+                            {% if coffee.sweetness %}
+                            
+                                Sweetness
+                                
+                                    
+                                        
+                                    
+                                
+                                {{ coffee.sweetness|replace('_', '-')|capitalize }}
+                            
+                            {% endif %}
+                        
+                    
+                
+            
+            
+            
+                
+                    
+                        Recommended Brewing Methods
+                    
+                    
+                        {% if brewing_methods %}
+                        
+                            {% for method in brewing_methods %}
+                            
+                                
+                                    
+                                        
+                                            
+                                            {{ method }}
+                                            View drinks
+                                        
+                                    
+                                
+                            
+                            {% endfor %}
+                        
+                        {% else %}
+                        No specific brewing recommendations available.
+                        {% endif %}
+                        
+                        
+                            
+                                View All Coffee Drinks
+                            
+                        
+                    
+                
+                
+                {% if similar_coffees %}
+                
+                    
+                        Similar Coffees
+                    
+                    
+                        
+                            {% for similar in similar_coffees %}
+                            
+                                
+                                    
+                                        
+                                            
+                                                
+                                            
+                                            
+                                                
+                                                    {{ similar.name }}
+                                                    {{ similar.bean_origin }}
+                                                
+                                            
+                                        
+                                    
+                                
+                            
+                            {% endfor %}
+                        
+                    
+                
+                {% endif %}
+            
+        
+    
+
+{% endblock %}
+
+{% block extra_css %}
+
+.attribute-meter {
+    width: 50px;
+    height: 10px;
+    background-color: #f1f1f1;
+    border-radius: 5px;
+    overflow: hidden;
+    margin-bottom: 5px;
+}
+.attribute-fill {
+    height: 100%;
+    background-color: var(--primary-color);
+}
+.attribute-low { width: 20%; }
+.attribute-medium_low { width: 40%; }
+.attribute-medium { width: 60%; }
+.attribute-medium_high { width: 80%; }
+.attribute-high { width: 100%; }
+
+.attribute-light { width: 20%; }
+.attribute-medium_light { width: 40%; }
+.attribute-medium { width: 60%; }
+.attribute-medium_full { width: 80%; }
+.attribute-full { width: 100%; }
+
+.brew-method-card {
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.3s ease;
+}
+.brew-method-card:hover {
+    transform: translateY(-5px);
+}
+.brew-method-card:hover .card {
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+{% endblock %}

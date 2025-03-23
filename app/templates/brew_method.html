@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    
+        {{ method|capitalize }} Coffee Drinks
+        Coffee drinks available using the {{ method }} brewing method.
+    
+
+
+
+    
+        {% if coffees %}
+        
+            {% for coffee in coffees %}
+            
+                
+                    
+                        
+                            
+                                
+                                {% if coffee.is_favorite %}
+                                Family Favorite
+                                {% endif %}
+                            
+                        
+                        
+                            
+                                
+                                    {{ coffee.name }}
+                                    {{ method|capitalize }}
+                                
+                                
+                                {{ coffee.description }}
+                                
+                                
+                                    {% if coffee.flavors %}
+                                        {% set flavor_list = coffee.flavors.split(',') %}
+                                        {% for flavor in flavor_list %}
+                                            {{ flavor.strip() }}
+                                        {% endfor %}
+                                    {% endif %}
+                                
+                                
+                                ${{ "%.2f"|format(coffee.price) }}
+                                
+                                
+                                
+                                
+                                    
+                                        Bean Details
+                                    
+                                    
+                                        Add to Cart
+                                    
+                                
+                            
+                        
+                    
+                
+            
+            {% endfor %}
+        
+        {% else %}
+        
+            
+            No coffees found for this brewing method
+            Try selecting a different brewing method.
+            Browse All Beans
+        
+        {% endif %}
+    
+
+{% endblock %}

@@ -1,0 +1,101 @@
+{% extends "admin/layout.html" %}
+
+{% block admin_content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Manage Coffee Menu</h1>
+        {% if current_user.is_admin %}
+        <a href="{{ url_for('admin.new_coffee') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Add New Coffee
+        </a>
+        {% endif %}
+    </div>
+    
+    {% if coffees %}
+    <div class="row">
+        {% for coffee in coffees %}
+        <div class="col-lg-6 col-xl-4 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold">{{ coffee.name }}</h6>
+                    <div class="d-flex">
+                        {% if coffee.is_favorite %}
+                        <span class="badge bg-warning me-2">Featured</span>
+                        {% endif %}
+                        <span class="badge bg-secondary">{{ coffee.category|capitalize }}</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-5">
+                            <div class="coffee-img-container mb-3">
+                                <img src="{{ url_for('static', filename=coffee.image) }}" alt="{{ coffee.name }}" class="coffee-img">
+                            </div>
+                            <p class="text-primary font-weight-bold">${{ coffee.price|round(2) }}</p>
+                            
+                            {% if coffee.flavors %}
+                            <p class="mb-0"><strong>Flavor Profile:</strong></p>
+                            <div class="mb-2">
+                                {% set flavor_list = coffee.flavors.split(',') %}
+                                {% for flavor in flavor_list %}
+                                    <span class="flavor-profile">{{ flavor.strip() }}</span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-7">
+                            <p>{{ coffee.description }}</p>
+                            
+                            {% if current_user.is_admin %}
+                            <div class="d-flex gap-2 mt-3">
+                                <a href="{{ url_for('admin.edit_coffee', id=coffee.id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-edit me-2"></i>Edit
+                                </a>
+                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ coffee.id }}">
+                                    <i class="fas fa-trash-alt me-2"></i>Delete
+                                </button>
+                            </div>
+                            
+                            <!-- Delete Confirmation Modal -->
+                            <div class="modal fade" id="deleteModal{{ coffee.id }}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Confirm Delete</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <p>Are you sure you want to delete <strong>{{ coffee.name }}</strong>?</p>
+                                            <p class="text-danger">This action cannot be undone.</p>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                            <form action="{{ url_for('admin.delete_coffee', id=coffee.id) }}" method="post">
+                                                <button type="submit" class="btn btn-danger">Delete</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card shadow">
+        <div class="card-body text-center py-5">
+            <i class="fas fa-coffee fa-3x text-muted mb-3"></i>
+            <h3>No Coffee Items Found</h3>
+            <p class="text-muted">Start by adding your first coffee to the menu.</p>
+            {% if current_user.is_admin %}
+            <a href="{{ url_for('admin.new_coffee') }}" class="btn btn-primary">Add New Coffee</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

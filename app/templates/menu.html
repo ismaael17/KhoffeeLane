@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Menu Header -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <h1 class="text-center mb-3">Coffee Menu</h1>
+        <p class="text-center text-muted mb-5">Select from our curated selection of coffee drinks.</p>
+        
+        <!-- Category filters -->
+        <div class="row mb-5">
+            <div class="col-md-8 mx-auto">
+                <div class="d-flex justify-content-center flex-wrap">
+                    <a href="{{ url_for('main.menu') }}" class="btn {% if selected_category == 'all' %}btn-primary{% else %}btn-outline-primary{% endif %} me-2 mb-2">
+                        All Coffees
+                    </a>
+                    {% for category in categories %}
+                    <a href="{{ url_for('main.menu', category=category) }}" class="btn {% if selected_category == category %}btn-primary{% else %}btn-outline-primary{% endif %} me-2 mb-2">
+                        {{ category|capitalize }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Coffee Menu Items -->
+<section class="py-5">
+    <div class="container">
+        {% if coffees %}
+        <div class="row">
+            {% for coffee in coffees %}
+            <div class="col-lg-6 mb-4" id="coffee-{{ coffee.id }}">
+                <div class="coffee-card" data-id="{{ coffee.id }}" data-price="{{ coffee.price }}">
+                    <div class="row g-0">
+                        <div class="col-md-5">
+                            <div class="coffee-img-container h-100">
+                                <img src="{{ url_for('static', filename='img/' + coffee.image) }}" alt="{{ coffee.name }}" class="coffee-img">
+                                {% if coffee.is_favorite %}
+                                <span class="coffee-badge">Family Favorite</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-7">
+                            <div class="card-body">
+                                <h3 class="coffee-title">{{ coffee.name }}</h3>
+                                <p class="coffee-desc">{{ coffee.description }}</p>
+                                
+                                <div class="mb-2">
+                                    {% if coffee.flavors %}
+                                        {% set flavor_list = coffee.flavors.split(',') %}
+                                        {% for flavor in flavor_list %}
+                                            <span class="flavor-profile">{{ flavor.strip() }}</span>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Coffee enthusiast details toggle -->
+                                <div class="mb-3">
+                                    <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#coffeeDetails{{ coffee.id }}" aria-expanded="false">
+                                        <i class="fas fa-info-circle me-1"></i> Coffee Details
+                                    </button>
+                                    
+                                    <div class="collapse mt-2" id="coffeeDetails{{ coffee.id }}">
+                                        <div class="card card-body bg-light">
+                                            <div class="row">
+                                                {% if coffee.bean_origin %}
+                                                <div class="col-6">
+                                                    <small class="text-muted">Origin:</small>
+                                                    <p class="mb-1">{{ coffee.bean_origin }}</p>
+                                                </div>
+                                                {% endif %}
+                                                
+                                                {% if coffee.bean_type %}
+                                                <div class="col-6">
+                                                    <small class="text-muted">Bean Type:</small>
+                                                    <p class="mb-1">{{ coffee.bean_type|capitalize }}</p>
+                                                </div>
+                                                {% endif %}
+                                                
+                                                {% if coffee.roast_level %}
+                                                <div class="col-6">
+                                                    <small class="text-muted">Roast:</small>
+                                                    <p class="mb-1">{{ coffee.roast_level|replace('_', '-')|capitalize }}</p>
+                                                </div>
+                                                {% endif %}
+                                                
+                                                {% if coffee.processing_method %}
+                                                <div class="col-6">
+                                                    <small class="text-muted">Processing:</small>
+                                                    <p class="mb-1">{{ coffee.processing_method|replace('_', '-')|capitalize }}</p>
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                            
+                                            {% if coffee.flavor_notes %}
+                                            <div class="mt-2">
+                                                <small class="text-muted">Flavor Notes:</small>
+                                                <p class="mb-1">{{ coffee.flavor_notes }}</p>
+                                            </div>
+                                            {% endif %}
+                                            
+                                            <div class="row mt-2">
+                                                {% if coffee.acidity %}
+                                                <div class="col-4">
+                                                    <small class="text-muted">Acidity:</small>
+                                                    <p class="mb-1">{{ coffee.acidity|replace('_', '-')|capitalize }}</p>
+                                                </div>
+                                                {% endif %}
+                                                
+                                                {% if coffee.body %}
+                                                <div class="col-4">
+                                                    <small class="text-muted">Body:</small>
+                                                    <p class="mb-1">{{ coffee.body|replace('_', '-')|capitalize }}</p>
+                                                </div>
+                                                {% endif %}
+                                                
+                                                {% if coffee.sweetness %}
+                                                <div class="col-4">
+                                                    <small class="text-muted">Sweetness:</small>
+                                                    <p class="mb-1">{{ coffee.sweetness|replace('_', '-')|capitalize }}</p>
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                            
+                                            {% if coffee.recommended_brew %}
+                                            <div class="mt-2">
+                                                <small class="text-muted">Recommended Brewing:</small>
+                                                <p class="mb-0">{{ coffee.recommended_brew }}</p>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="coffee-price mb-3">${{ "%.2f"|format(coffee.price) }}</div>
+                                
+                                <!-- Coffee options -->
+                                <div class="coffee-options">
+                                    <h6>Size</h6>
+                                    <div class="mb-3">
+                                        <div class="form-check form-check-inline coffee-option">
+                                            <input class="form-check-input" type="radio" name="size-{{ coffee.id }}" id="size-{{ coffee.id }}-small" value="small" checked>
+                                            <label class="form-check-label" for="size-{{ coffee.id }}-small">Small</label>
+                                        </div>
+                                        <div class="form-check form-check-inline coffee-option">
+                                            <input class="form-check-input" type="radio" name="size-{{ coffee.id }}" id="size-{{ coffee.id }}-medium" value="medium">
+                                            <label class="form-check-label" for="size-{{ coffee.id }}-medium">Medium (+$0.75)</label>
+                                        </div>
+                                        <div class="form-check form-check-inline coffee-option">
+                                            <input class="form-check-input" type="radio" name="size-{{ coffee.id }}" id="size-{{ coffee.id }}-large" value="large">
+                                            <label class="form-check-label" for="size-{{ coffee.id }}-large">Large (+$1.50)</label>
+                                        </div>
+                                    </div>
+                                    
+                                    <h6>Milk</h6>
+                                    <div class="mb-3">
+                                        <div class="form-check form-check-inline coffee-option">
+                                            <input class="form-check-input" type="radio" name="milk-{{ coffee.id }}" id="milk-{{ coffee.id }}-none" value="none">
+                                            <label class="form-check-label" for="milk-{{ coffee.id }}-none">None</label>
+                                        </div>
+                                        <div class="form-check form-check-inline coffee-option">
+                                            <input class="form-check-input" type="radio" name="milk-{{ coffee.id }}" id="milk-{{ coffee.id }}-whole" value="whole" checked>
+                                            <label class="form-check-label" for="milk-{{ coffee.id }}-whole">Whole</label>
+                                        </div>
+                                        <div class="form-check form-check-inline coffee-option">
+                                            <input class="form-check-input" type="radio" name="milk-{{ coffee.id }}" id="milk-{{ coffee.id }}-skim" value="skim">
+                                            <label class="form-check-label" for="milk-{{ coffee.id }}-skim">Skim</label>
+                                        </div>
+                                        <div class="form-check form-check-inline coffee-option">
+                                            <input class="form-check-input" type="radio" name="milk-{{ coffee.id }}" id="milk-{{ coffee.id }}-almond" value="almond">
+                                            <label class="form-check-label" for="milk-{{ coffee.id }}-almond">Almond</label>
+                                        </div>
+                                    </div>
+                                    
+                                    <h6>Sugar</h6>
+                                    <div class="mb-3">
+                                        <div class="form-check form-check-inline coffee-option">
+                                            <input class="form-check-input" type="radio" name="sugar-{{ coffee.id }}" id="sugar-{{ coffee.id }}-none" value="none" checked>
+                                            <label class="form-check-label" for="sugar-{{ coffee.id }}-none">None</label>
+                                        </div>
+                                        <div class="form-check form-check-inline coffee-option">
+                                            <input class="form-check-input" type="radio" name="sugar-{{ coffee.id }}" id="sugar-{{ coffee.id }}-little" value="little">
+                                            <label class="form-check-label" for="sugar-{{ coffee.id }}-little">Little</label>
+                                        </div>
+                                        <div class="form-check form-check-inline coffee-option">
+                                            <input class="form-check-input" type="radio" name="sugar-{{ coffee.id }}" id="sugar-{{ coffee.id }}-regular" value="regular">
+                                            <label class="form-check-label" for="sugar-{{ coffee.id }}-regular">Regular</label>
+                                        </div>
+                                    </div>
+                                    
+                                    <h6>Extras</h6>
+                                    <div class="mb-3">
+                                        <div class="form-check coffee-option">
+                                            <input class="form-check-input" type="checkbox" name="extras-{{ coffee.id }}" id="extras-{{ coffee.id }}-extra-shot" value="Extra Shot" data-price="1.00">
+                                            <label class="form-check-label" for="extras-{{ coffee.id }}-extra-shot">Extra Shot (+$1.00)</label>
+                                        </div>
+                                        <div class="form-check coffee-option">
+                                            <input class="form-check-input" type="checkbox" name="extras-{{ coffee.id }}" id="extras-{{ coffee.id }}-whipped-cream" value="Whipped Cream" data-price="0.50">
+                                            <label class="form-check-label" for="extras-{{ coffee.id }}-whipped-cream">Whipped Cream (+$0.50)</label>
+                                        </div>
+                                        <div class="form-check coffee-option">
+                                            <input class="form-check-input" type="checkbox" name="extras-{{ coffee.id }}" id="extras-{{ coffee.id }}-caramel" value="Caramel Drizzle" data-price="0.50">
+                                            <label class="form-check-label" for="extras-{{ coffee.id }}-caramel">Caramel Drizzle (+$0.50)</label>
+                                        </div>
+                                    </div>
+                                    
+                                    <h6>Special Instructions</h6>
+                                    <div class="mb-3">
+                                        <textarea class="form-control coffee-notes" rows="2" placeholder="Any special instructions for your barista?"></textarea>
+                                    </div>
+                                    
+                                    <button class="btn btn-primary add-to-cart w-100">
+                                        <i class="fas fa-cart-plus me-2"></i>Add to Cart
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-coffee fa-3x mb-3 text-muted"></i>
+            <h3>No coffees found in this category.</h3>
+            <p class="text-muted">Try selecting a different category.</p>
+            <a href="{{ url_for('main.menu') }}" class="btn btn-primary mt-3">View All Coffees</a>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Toast container for notifications -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3"></div>
+{% endblock %}

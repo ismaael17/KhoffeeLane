@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Barista Mode</h1>
+            <div>
+                <a href="{{ url_for('main.admin') }}" class="btn {% if status_filter == 'all' %}btn-primary{% else %}btn-outline-primary{% endif %} me-2">
+                    All Orders
+                </a>
+                <a href="{{ url_for('main.admin', status='pending') }}" class="btn {% if status_filter == 'pending' %}btn-primary{% else %}btn-outline-primary{% endif %} me-2">
+                    <i class="fas fa-hourglass-start me-1"></i>Pending
+                </a>
+                <a href="{{ url_for('main.admin', status='preparing') }}" class="btn {% if status_filter == 'preparing' %}btn-primary{% else %}btn-outline-primary{% endif %} me-2">
+                    <i class="fas fa-coffee me-1"></i>Preparing
+                </a>
+                <a href="{{ url_for('main.admin', status='ready') }}" class="btn {% if status_filter == 'ready' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                    <i class="fas fa-check me-1"></i>Ready
+                </a>
+            </div>
+        </div>
+        
+        {% if orders %}
+        <div class="row">
+            <div class="col-lg-8">
+                <h4 class="mb-3">Active Orders</h4>
+                
+                {% for order in orders if order.status != 'completed' and order.status != 'cancelled' %}
+                <div class="card order-queue-card mb-4">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <h5 class="mb-0">{{ order.order_id }}</h5>
+                                <p class="text-muted mb-0">{{ order.created_at|replace('T', ' at ')|replace('Z', '') }}</p>
+                            </div>
+                            <div>
+                                {% if order.status == 'pending' %}
+                                <span class="badge bg-warning text-dark">{{ order.status|capitalize }}</span>
+                                {% elif order.status == 'preparing' %}
+                                <span class="badge bg-info">{{ order.status|capitalize }}</span>
+                                {% elif order.status == 'ready' %}
+                                <span class="badge bg-success">{{ order.status|capitalize }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <strong>For:</strong> {{ order.family_member }}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <strong>Items:</strong>
+                            <ul class="list-group list-group-flush">
+                                {% for item in order.items %}
+                                <li class="list-group-item px-0 py-2">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <div><strong>{{ item.quantity }}x {{ item.name }}</strong></div>
+                                            <small class="text-muted">
+                                                {% if item.options.size %}Size: {{ item.options.size|capitalize }}{% endif %}
+                                                {% if item.options.milk %}• Milk: {{ item.options.milk|capitalize }}{% endif %}
+                                                {% if item.options.sugar %}• Sugar: {{ item.options.sugar|capitalize }}{% endif %}
+                                                {% if item.options.extras %}
+                                                    • Extras: 
+                                                    {% for extra in item.options.extras %}
+                                                        {{ extra.name }}{% if not loop.last %}, {% endif %}
+                                                    {% endfor %}
+                                                {% endif %}
+                                            </small>
+                                        </div>
+                                        <div>${{ (item.price * item.quantity)|round(2) }}</div>
+                                    </div>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        
+                        {% if order.notes %}
+                        <div class="mb-3 notes-card">
+                            <strong>Notes:</strong>
+                            <p class="mb-0">{{ order.notes }}</p>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div><strong>Total:</strong> ${{ order.total|round(2) }}</div>
+                            <div class="order-actions">
+                                <form action="{{ url_for('main.update_order_status', order_id=order.order_id) }}" method="post" class="d-inline">
+                                    {% if order.status == 'pending' %}
+                                    <input type="hidden" name="status" value="preparing">
+                                    <button type="submit" class="btn btn-sm btn-primary">Start Preparing</button>
+                                    {% elif order.status == 'preparing' %}
+                                    <input type="hidden" name="status" value="ready">
+                                    <button type="submit" class="btn btn-sm btn-success">Mark as Ready</button>
+                                    {% elif order.status == 'ready' %}
+                                    <input type="hidden" name="status" value="completed">
+                                    <button type="submit" class="btn btn-sm btn-info">Mark as Completed</button>
+                                    {% endif %}
+                                </form>
+                                
+                                <form action="{{ url_for('main.update_order_status', order_id=order.order_id) }}" method="post" class="d-inline">
+                                    <input type="hidden" name="status" value="cancelled">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Cancel</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>No active orders found.
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="col-lg-4">
+                <h4 class="mb-3">Completed Orders</h4>
+                
+                {% for order in orders if order.status == 'completed' or order.status == 'cancelled' %}
+                <div class="card mb-3">
+                    <div class="card-body py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0">{{ order.order_id }}</h6>
+                                <small class="text-muted">{{ order.family_member }}</small>
+                            </div>
+                            <div>
+                                {% if order.status == 'completed' %}
+                                <span class="badge bg-success">{{ order.status|capitalize }}</span>
+                                {% elif order.status == 'cancelled' %}
+                                <span class="badge bg-danger">{{ order.status|capitalize }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="alert alert-secondary">
+                    <i class="fas fa-info-circle me-2"></i>No completed orders found.
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-coffee fa-3x mb-3 text-muted"></i>
+            <h3>No orders found</h3>
+            <p class="text-muted">When family members place orders, they will appear here.</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

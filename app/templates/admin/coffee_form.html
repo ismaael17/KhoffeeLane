@@ -1,0 +1,280 @@
+{% extends "admin/layout.html" %}
+
+{% block admin_content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">{% if coffee %}Edit{% else %}Add New{% endif %} Coffee</h1>
+        <a href="{{ url_for('admin.menu') }}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Menu
+        </a>
+    </div>
+    
+    <div class="card shadow">
+        <div class="card-body p-4">
+            <ul class="nav nav-tabs mb-4" id="coffeeFormTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic-info" type="button" role="tab" aria-controls="basic-info" aria-selected="true">Basic Info</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="beans-tab" data-bs-toggle="tab" data-bs-target="#beans-info" type="button" role="tab" aria-controls="beans-info" aria-selected="false">Bean Details</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="flavor-tab" data-bs-toggle="tab" data-bs-target="#flavor-info" type="button" role="tab" aria-controls="flavor-info" aria-selected="false">Flavor Profile</button>
+                </li>
+            </ul>
+            
+            <form method="POST" enctype="multipart/form-data" class="coffee-form">
+                {{ form.hidden_tag() }}
+                
+                <div class="tab-content" id="coffeeFormTabContent">
+                    <!-- Basic Info Tab -->
+                    <div class="tab-pane fade show active" id="basic-info" role="tabpanel" aria-labelledby="basic-tab">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.name.label(class="form-label") }}
+                                {% if form.name.errors %}
+                                    {{ form.name(class="form-control is-invalid") }}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.name.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ form.name(class="form-control") }}
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-3 mb-3">
+                                {{ form.price.label(class="form-label") }}
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    {% if form.price.errors %}
+                                        {{ form.price(class="form-control is-invalid") }}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.price.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        {{ form.price(class="form-control") }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3 mb-3">
+                                {{ form.category.label(class="form-label") }}
+                                {% if form.category.errors %}
+                                    {{ form.category(class="form-select is-invalid") }}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.category.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ form.category(class="form-select") }}
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.description.label(class="form-label") }}
+                            {% if form.description.errors %}
+                                {{ form.description(class="form-control is-invalid", rows=4) }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.description.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.description(class="form-control", rows=4) }}
+                            {% endif %}
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {{ form.flavors.label(class="form-label") }}
+                                {% if form.flavors.errors %}
+                                    {{ form.flavors(class="form-control is-invalid") }}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.flavors.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ form.flavors(class="form-control") }}
+                                    <div class="form-text">Enter flavor profiles separated by commas (e.g. Strong, Intense, Mild)</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                {{ form.image.label(class="form-label") }}
+                                {% if form.image.errors %}
+                                    {{ form.image(class="form-control is-invalid") }}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.image.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ form.image(class="form-control") }}
+                                    <div class="form-text">Upload a new image (leave empty to keep current image)</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4 form-check">
+                            {{ form.is_favorite(class="form-check-input") }}
+                            {{ form.is_favorite.label(class="form-check-label") }}
+                        </div>
+                    </div>
+                    
+                    <!-- Bean Details Tab -->
+                    <div class="tab-pane fade" id="beans-info" role="tabpanel" aria-labelledby="beans-tab">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.bean_origin.label(class="form-label") }}
+                                {% if form.bean_origin.errors %}
+                                    {{ form.bean_origin(class="form-control is-invalid") }}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.bean_origin.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ form.bean_origin(class="form-control") }}
+                                    <div class="form-text">Country or region of origin (e.g. Ethiopia, Colombia, Sumatra)</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                {{ form.bean_type.label(class="form-label") }}
+                                {% if form.bean_type.errors %}
+                                    {{ form.bean_type(class="form-select is-invalid") }}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.bean_type.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ form.bean_type(class="form-select") }}
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6 mb-3">
+                                {{ form.roast_level.label(class="form-label") }}
+                                {% if form.roast_level.errors %}
+                                    {{ form.roast_level(class="form-select is-invalid") }}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.roast_level.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ form.roast_level(class="form-select") }}
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                {{ form.processing_method.label(class="form-label") }}
+                                {% if form.processing_method.errors %}
+                                    {{ form.processing_method(class="form-select is-invalid") }}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.processing_method.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ form.processing_method(class="form-select") }}
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.recommended_brew.label(class="form-label") }}
+                            {% if form.recommended_brew.errors %}
+                                {{ form.recommended_brew(class="form-control is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.recommended_brew.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.recommended_brew(class="form-control") }}
+                                <div class="form-text">Enter recommended brewing methods separated by commas (e.g. Espresso, Pour Over, French Press)</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Flavor Profile Tab -->
+                    <div class="tab-pane fade" id="flavor-info" role="tabpanel" aria-labelledby="flavor-tab">
+                        <div class="row mb-3">
+                            <div class="col-md-4 mb-3">
+                                {{ form.acidity.label(class="form-label") }}
+                                {% if form.acidity.errors %}
+                                    {{ form.acidity(class="form-select is-invalid") }}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.acidity.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ form.acidity(class="form-select") }}
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                {{ form.body.label(class="form-label") }}
+                                {% if form.body.errors %}
+                                    {{ form.body(class="form-select is-invalid") }}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.body.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ form.body(class="form-select") }}
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                {{ form.sweetness.label(class="form-label") }}
+                                {% if form.sweetness.errors %}
+                                    {{ form.sweetness(class="form-select is-invalid") }}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.sweetness.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ form.sweetness(class="form-select") }}
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.flavor_notes.label(class="form-label") }}
+                            {% if form.flavor_notes.errors %}
+                                {{ form.flavor_notes(class="form-control is-invalid", rows=4) }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.flavor_notes.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.flavor_notes(class="form-control", rows=4, placeholder="Describe the detailed flavor profile of this coffee (e.g. Notes of caramel, chocolate, and berries with a citrus finish)") }}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{{ url_for('admin.menu') }}" class="btn btn-outline-secondary">Cancel</a>
+                    {{ form.submit(class="btn btn-primary") }}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    
+        Coffee Bean Selection
+        Start by choosing your favorite coffee bean.
+    
+
+
+
+    
+        {% if beans %}
+        
+            {% for bean in beans %}
+            
+                
+                    
+                        
+                        {% if bean.is_favorite %}
+                        Family Favorite
+                        {% endif %}
+                    
+                    
+                        {{ bean.name }}
+                        
+                        
+                            {% if bean.bean_origin %}
+                            Origin: {{ bean.bean_origin }}
+                            {% endif %}
+                            
+                            {% if bean.roast_level %}
+                            Roast: {{ bean.roast_level|replace('_', '-')|capitalize }}
+                            {% endif %}
+                        
+                        
+                        
+                            {% if bean.flavors %}
+                                {% set flavor_list = bean.flavors.split(',') %}
+                                {% for flavor in flavor_list %}
+                                    {{ flavor.strip() }}
+                                {% endfor %}
+                            {% endif %}
+                        
+                        
+                        {{ bean.description }}
+                        
+                        
+                            Explore Bean
+                        
+                    
+                
+            
+            {% endfor %}
+        
+        {% else %}
+        
+            
+            No coffee beans available
+            Check back soon for updated bean inventory.
+        
+        {% endif %}
+    
+
+{% endblock %}
