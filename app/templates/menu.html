@@ -5,17 +5,35 @@
 <section class="py-5 bg-light">
     <div class="container">
         <h1 class="text-center mb-3">Coffee Menu</h1>
-        <p class="text-center text-muted mb-5">Select from our curated selection of coffee drinks.</p>
+        
+        {% if selected_bean %}
+        <div class="alert alert-primary d-flex align-items-center mb-4">
+            <div class="me-3">
+                <img src="{{ url_for('static', filename=selected_bean.image) }}" alt="{{ selected_bean.name }}" class="rounded-circle" style="width: 50px; height: 50px; object-fit: cover;">
+            </div>
+            <div>
+                <h5 class="alert-heading mb-1">Using {{ selected_bean.name }} Beans</h5>
+                <p class="mb-0 small">{{ selected_bean.description|truncate(100) }}</p>
+            </div>
+            <div class="ms-auto">
+                <a href="{{ url_for('main.menu') }}" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-times me-1"></i>Clear Bean Filter
+                </a>
+            </div>
+        </div>
+        {% else %}
+        <p class="text-center text-muted mb-4">Select from our curated selection of coffee drinks or <a href="{{ url_for('main.beans') }}">choose a coffee bean first</a>.</p>
+        {% endif %}
         
         <!-- Category filters -->
         <div class="row mb-5">
             <div class="col-md-8 mx-auto">
                 <div class="d-flex justify-content-center flex-wrap">
-                    <a href="{{ url_for('main.menu') }}" class="btn {% if selected_category == 'all' %}btn-primary{% else %}btn-outline-primary{% endif %} me-2 mb-2">
+                    <a href="{{ url_for('main.menu', bean_id=request.args.get('bean_id')) }}" class="btn {% if selected_category == 'all' %}btn-primary{% else %}btn-outline-primary{% endif %} me-2 mb-2">
                         All Coffees
                     </a>
                     {% for category in categories %}
-                    <a href="{{ url_for('main.menu', category=category) }}" class="btn {% if selected_category == category %}btn-primary{% else %}btn-outline-primary{% endif %} me-2 mb-2">
+                    <a href="{{ url_for('main.menu', category=category, bean_id=request.args.get('bean_id')) }}" class="btn {% if selected_category == category %}btn-primary{% else %}btn-outline-primary{% endif %} me-2 mb-2">
                         {{ category|capitalize }}
                     </a>
                     {% endfor %}
@@ -36,7 +54,7 @@
                     <div class="row g-0">
                         <div class="col-md-5">
                             <div class="coffee-img-container h-100">
-                                <img src="{{ url_for('static', filename='img/' + coffee.image) }}" alt="{{ coffee.name }}" class="coffee-img">
+                                <img src="{{ url_for('static', filename=coffee.image) }}" alt="{{ coffee.name }}" class="coffee-img">
                                 {% if coffee.is_favorite %}
                                 <span class="coffee-badge">Family Favorite</span>
                                 {% endif %}
@@ -56,6 +74,26 @@
                                     {% endif %}
                                 </div>
                                 
+                                <!-- Available beans for this coffee -->
+                                {% if coffee.beans %}
+                                <div class="mb-3">
+                                    <small class="text-muted d-block mb-1">Available with these beans:</small>
+                                    <div class="d-flex flex-wrap">
+                                        {% if selected_bean %}
+                                            <!-- If a bean is selected, just show that one -->
+                                            <span class="badge bg-primary me-1 mb-1">{{ selected_bean.name }}</span>
+                                        {% else %}
+                                            <!-- Otherwise show all compatible beans with links -->
+                                            {% for bean in coffee.beans %}
+                                                <a href="{{ url_for('main.menu', bean_id=bean.id, category=selected_category) }}" class="badge bg-light text-dark border me-1 mb-1 text-decoration-none">
+                                                    {{ bean.name }}
+                                                </a>
+                                            {% endfor %}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                                
                                 <!-- Coffee enthusiast details toggle -->
                                 <div class="mb-3">
                                     <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#coffeeDetails{{ coffee.id }}" aria-expanded="false">
@@ -65,71 +103,13 @@
                                     <div class="collapse mt-2" id="coffeeDetails{{ coffee.id }}">
                                         <div class="card card-body bg-light">
                                             <div class="row">
-                                                {% if coffee.bean_origin %}
-                                                <div class="col-6">
-                                                    <small class="text-muted">Origin:</small>
-                                                    <p class="mb-1">{{ coffee.bean_origin }}</p>
-                                                </div>
-                                                {% endif %}
-                                                
-                                                {% if coffee.bean_type %}
-                                                <div class="col-6">
-                                                    <small class="text-muted">Bean Type:</small>
-                                                    <p class="mb-1">{{ coffee.bean_type|capitalize }}</p>
-                                                </div>
-                                                {% endif %}
-                                                
-                                                {% if coffee.roast_level %}
-                                                <div class="col-6">
-                                                    <small class="text-muted">Roast:</small>
-                                                    <p class="mb-1">{{ coffee.roast_level|replace('_', '-')|capitalize }}</p>
-                                                </div>
-                                                {% endif %}
-                                                
-                                                {% if coffee.processing_method %}
-                                                <div class="col-6">
-                                                    <small class="text-muted">Processing:</small>
-                                                    <p class="mb-1">{{ coffee.processing_method|replace('_', '-')|capitalize }}</p>
+                                                {% if coffee.default_bean %}
+                                                <div class="col-12 mb-2">
+                                                    <small class="text-muted">Recommended Bean:</small>
+                                                    <p class="mb-1">{{ coffee.default_bean.name }} ({{ coffee.default_bean.origin }})</p>
                                                 </div>
                                                 {% endif %}
                                             </div>
-                                            
-                                            {% if coffee.flavor_notes %}
-                                            <div class="mt-2">
-                                                <small class="text-muted">Flavor Notes:</small>
-                                                <p class="mb-1">{{ coffee.flavor_notes }}</p>
-                                            </div>
-                                            {% endif %}
-                                            
-                                            <div class="row mt-2">
-                                                {% if coffee.acidity %}
-                                                <div class="col-4">
-                                                    <small class="text-muted">Acidity:</small>
-                                                    <p class="mb-1">{{ coffee.acidity|replace('_', '-')|capitalize }}</p>
-                                                </div>
-                                                {% endif %}
-                                                
-                                                {% if coffee.body %}
-                                                <div class="col-4">
-                                                    <small class="text-muted">Body:</small>
-                                                    <p class="mb-1">{{ coffee.body|replace('_', '-')|capitalize }}</p>
-                                                </div>
-                                                {% endif %}
-                                                
-                                                {% if coffee.sweetness %}
-                                                <div class="col-4">
-                                                    <small class="text-muted">Sweetness:</small>
-                                                    <p class="mb-1">{{ coffee.sweetness|replace('_', '-')|capitalize }}</p>
-                                                </div>
-                                                {% endif %}
-                                            </div>
-                                            
-                                            {% if coffee.recommended_brew %}
-                                            <div class="mt-2">
-                                                <small class="text-muted">Recommended Brewing:</small>
-                                                <p class="mb-0">{{ coffee.recommended_brew }}</p>
-                                            </div>
-                                            {% endif %}
                                         </div>
                                     </div>
                                 </div>
@@ -152,6 +132,27 @@
                                             <input class="form-check-input" type="radio" name="size-{{ coffee.id }}" id="size-{{ coffee.id }}-large" value="large">
                                             <label class="form-check-label" for="size-{{ coffee.id }}-large">Large (+$1.50)</label>
                                         </div>
+                                    </div>
+                                    
+                                    <h6>Bean Selection</h6>
+                                    <div class="mb-3">
+                                        {% if selected_bean %}
+                                            <!-- If a bean is pre-selected, use it -->
+                                            <div class="form-check coffee-option">
+                                                <input class="form-check-input" type="radio" name="bean-{{ coffee.id }}" id="bean-{{ coffee.id }}-{{ selected_bean.id }}" value="{{ selected_bean.id }}" checked>
+                                                <label class="form-check-label" for="bean-{{ coffee.id }}-{{ selected_bean.id }}">{{ selected_bean.name }} ({{ selected_bean.origin }})</label>
+                                            </div>
+                                        {% elif coffee.beans %}
+                                            <!-- Otherwise let user pick from compatible beans -->
+                                            {% for bean in coffee.beans %}
+                                                <div class="form-check coffee-option">
+                                                    <input class="form-check-input" type="radio" name="bean-{{ coffee.id }}" id="bean-{{ coffee.id }}-{{ bean.id }}" value="{{ bean.id }}" {% if coffee.default_bean and coffee.default_bean.id == bean.id %}checked{% elif loop.first and not coffee.default_bean %}checked{% endif %}>
+                                                    <label class="form-check-label" for="bean-{{ coffee.id }}-{{ bean.id }}">{{ bean.name }} ({{ bean.origin }}) {% if coffee.default_bean and coffee.default_bean.id == bean.id %}(Recommended){% endif %}</label>
+                                                </div>
+                                            {% endfor %}
+                                        {% else %}
+                                            <p class="text-muted">No beans available for this coffee.</p>
+                                        {% endif %}
                                     </div>
                                     
                                     <h6>Milk</h6>
@@ -225,9 +226,17 @@
         {% else %}
         <div class="text-center py-5">
             <i class="fas fa-coffee fa-3x mb-3 text-muted"></i>
-            <h3>No coffees found in this category.</h3>
+            <h3>No coffees found with these criteria.</h3>
+            {% if selected_bean %}
+            <p class="text-muted">No coffee drinks are compatible with this bean. Try selecting a different bean.</p>
+            <div class="mt-3">
+                <a href="{{ url_for('main.beans') }}" class="btn btn-primary me-2">Browse Other Beans</a>
+                <a href="{{ url_for('main.menu') }}" class="btn btn-outline-primary">View All Coffees</a>
+            </div>
+            {% else %}
             <p class="text-muted">Try selecting a different category.</p>
             <a href="{{ url_for('main.menu') }}" class="btn btn-primary mt-3">View All Coffees</a>
+            {% endif %}
         </div>
         {% endif %}
     </div>
@@ -235,4 +244,114 @@
 
 <!-- Toast container for notifications -->
 <div class="toast-container position-fixed bottom-0 end-0 p-3"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Override the existing add-to-cart functionality to include bean selection
+    const addToCartButtons = document.querySelectorAll('.add-to-cart');
+    addToCartButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Get coffee details
+            const card = this.closest('.coffee-card');
+            const id = card.getAttribute('data-id');
+            const name = card.querySelector('.coffee-title').textContent;
+            const price = parseFloat(card.getAttribute('data-price'));
+            const image = card.querySelector('.coffee-img').src;
+            
+            // Get selected options
+            const options = {};
+            
+            // Get milk option
+            const milkOption = card.querySelector('input[name="milk-' + id + '"]:checked');
+            if (milkOption) {
+                options.milk = milkOption.value;
+            }
+            
+            // Get sugar option
+            const sugarOption = card.querySelector('input[name="sugar-' + id + '"]:checked');
+            if (sugarOption) {
+                options.sugar = sugarOption.value;
+            }
+            
+            // Get bean selection
+            const beanOption = card.querySelector('input[name="bean-' + id + '"]:checked');
+            if (beanOption) {
+                options.bean_id = beanOption.value;
+                // Extract bean name from the label text
+                const beanLabel = beanOption.nextElementSibling.textContent.trim();
+                options.bean_name = beanLabel;
+            }
+            
+            // Check if size options are available
+            const sizeOption = card.querySelector('input[name="size-' + id + '"]:checked');
+            if (sizeOption) {
+                options.size = sizeOption.value;
+                
+                // Adjust price based on size
+                if (options.size === 'medium') {
+                    options.priceAdjustment = 0.75;
+                } else if (options.size === 'large') {
+                    options.priceAdjustment = 1.5;
+                } else {
+                    options.priceAdjustment = 0;
+                }
+            }
+            
+            // Add extras if selected
+            const extrasOptions = card.querySelectorAll('input[name="extras-' + id + '"]:checked');
+            if (extrasOptions.length > 0) {
+                options.extras = [];
+                extrasOptions.forEach(extra => {
+                    options.extras.push({
+                        name: extra.value,
+                        price: parseFloat(extra.getAttribute('data-price') || 0)
+                    });
+                });
+            }
+            
+            // Get notes if available
+            const notesInput = card.querySelector('.coffee-notes');
+            if (notesInput && notesInput.value.trim() !== '') {
+                options.notes = notesInput.value.trim();
+            }
+            
+            // Calculate final price with adjustments
+            let finalPrice = price;
+            
+            // Add size adjustment
+            if (options.priceAdjustment) {
+                finalPrice += options.priceAdjustment;
+            }
+            
+            // Add extras
+            if (options.extras && options.extras.length > 0) {
+                options.extras.forEach(extra => {
+                    finalPrice += extra.price;
+                });
+            }
+            
+            // Create cart item
+            const cartItem = {
+                id: id,
+                name: name,
+                price: finalPrice,
+                basePrice: price,
+                image: image,
+                options: options,
+                quantity: 1
+            };
+            
+            // Add to cart
+            addToCart(cartItem);
+            
+            // Show success message
+            showToast('Added to cart: ' + name);
+        });
+    });
+});
+</script>
 {% endblock %}

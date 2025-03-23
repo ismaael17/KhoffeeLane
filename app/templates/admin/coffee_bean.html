@@ -1,0 +1,136 @@
+{% extends "admin/layout.html" %}
+
+{% block admin_content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Manage Coffee Beans</h1>
+        {% if current_user.is_admin %}
+        <a href="{{ url_for('admin.new_bean') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Add New Bean
+        </a>
+        {% endif %}
+    </div>
+    
+    {% if beans %}
+    <div class="row">
+        {% for bean in beans %}
+        <div class="col-lg-6 col-xl-4 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold">{{ bean.name }}</h6>
+                    <div class="d-flex">
+                        {% if bean.is_favorite %}
+                        <span class="badge bg-warning me-2">Featured</span>
+                        {% endif %}
+                        <span class="badge bg-secondary">{{ bean.origin }}</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-5">
+                            <div class="coffee-img-container mb-3">
+                                <img src="{{ url_for('static', filename=bean.image) }}" alt="{{ bean.name }}" class="coffee-img">
+                            </div>
+                            <p class="text-primary font-weight-bold">${{ bean.price|round(2) }}</p>
+                            
+                            <!-- Bean attributes quick view -->
+                            <div class="mb-2">
+                                {% if bean.roast_level %}
+                                <div class="d-flex align-items-center mb-1">
+                                    <small class="me-2">Roast:</small>
+                                    <span class="badge bg-{{ bean.roast_level|replace('light', 'warning')|replace('medium', 'info')|replace('dark', 'dark') }}">
+                                        {{ bean.roast_level|replace('_', '-')|capitalize }}
+                                    </span>
+                                </div>
+                                {% endif %}
+                                
+                                {% if bean.bean_type %}
+                                <div class="d-flex align-items-center mb-1">
+                                    <small class="me-2">Type:</small>
+                                    <span class="badge bg-secondary">{{ bean.bean_type|capitalize }}</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-7">
+                            <p>{{ bean.description }}</p>
+                            
+                            <!-- Bean flavor notes -->
+                            {% if bean.flavor_notes %}
+                            <div class="mb-2">
+                                <small class="text-muted">Flavor Notes:</small>
+                                <p class="mb-0 small">{{ bean.flavor_notes }}</p>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Bean associated coffees -->
+                            {% if bean.coffees %}
+                            <div class="mb-2">
+                                <small class="text-muted">Used in:</small>
+                                <p class="mb-0 small">
+                                    {% for coffee in bean.coffees %}
+                                        <span class="badge bg-light text-dark me-1">{{ coffee.name }}</span>
+                                    {% endfor %}
+                                </p>
+                            </div>
+                            {% endif %}
+                            
+                            {% if current_user.is_admin %}
+                            <div class="d-flex gap-2 mt-3">
+                                <a href="{{ url_for('admin.edit_bean', id=bean.id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-edit me-2"></i>Edit
+                                </a>
+                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ bean.id }}">
+                                    <i class="fas fa-trash-alt me-2"></i>Delete
+                                </button>
+                            </div>
+                            
+                            <!-- Delete Confirmation Modal -->
+                            <div class="modal fade" id="deleteModal{{ bean.id }}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Confirm Delete</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <p>Are you sure you want to delete <strong>{{ bean.name }}</strong>?</p>
+                                            {% if bean.coffees %}
+                                            <div class="alert alert-warning">
+                                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                                This bean is used in {{ bean.coffees|length }} coffee drinks. Deleting it may affect those drinks.
+                                            </div>
+                                            {% endif %}
+                                            <p class="text-danger">This action cannot be undone.</p>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                            <form action="{{ url_for('admin.delete_bean', id=bean.id) }}" method="post">
+                                                <button type="submit" class="btn btn-danger">Delete</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card shadow">
+        <div class="card-body text-center py-5">
+            <i class="fas fa-coffee fa-3x mb-3 text-muted"></i>
+            <h3>No Coffee Beans Found</h3>
+            <p class="text-muted">Start by adding your first coffee bean to the menu.</p>
+            {% if current_user.is_admin %}
+            <a href="{{ url_for('admin.new_bean') }}" class="btn btn-primary">Add New Bean</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

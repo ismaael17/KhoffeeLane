@@ -8,6 +8,8 @@ from wtforms import (
     SubmitField,
     FloatField,
     SelectField,
+    SelectMultipleField,
+    widgets,
 )
 from wtforms.validators import (
     DataRequired,
@@ -52,6 +54,16 @@ class RegistrationForm(FlaskForm):
             raise ValidationError("Please use a different email address.")
 
 
+class MultiCheckboxField(SelectMultipleField):
+    widget = widgets.ListWidget(prefix_label=False)
+    option_widget = widgets.CheckboxInput()
+
+    def pre_validate(self, form):
+        """Override pre validation to allow empty submissions."""
+        if self.data:
+            super().pre_validate(form)
+
+
 class CoffeeForm(FlaskForm):
     name = StringField("Name", validators=[DataRequired(), Length(max=100)])
     description = TextAreaField("Description", validators=[DataRequired()])
@@ -70,9 +82,26 @@ class CoffeeForm(FlaskForm):
     )
     is_favorite = BooleanField("Featured Item")
     flavors = StringField("Flavors (comma separated)", validators=[Optional()])
+    image = FileField(
+        "Image", validators=[FileAllowed(["jpg", "jpeg", "png"], "Images only!")]
+    )
 
-    # Coffee enthusiast details
-    bean_origin = StringField("Bean Origin", validators=[Optional(), Length(max=100)])
+    # Bean relationships - these will be populated dynamically
+    beans = SelectMultipleField(
+        "Compatible Coffee Beans", coerce=int, validators=[Optional()]
+    )
+    default_bean_id = SelectField("Default Bean", coerce=int, validators=[Optional()])
+
+    submit = SubmitField("Save")
+
+
+class CoffeeBeansForm(FlaskForm):
+    name = StringField("Name", validators=[DataRequired(), Length(max=100)])
+    description = TextAreaField("Description", validators=[DataRequired()])
+    price = FloatField("Price", validators=[DataRequired(), NumberRange(min=0)])
+    is_favorite = BooleanField("Featured Bean")
+
+    origin = StringField("Origin", validators=[Optional(), Length(max=100)])
     bean_type = SelectField(
         "Bean Type",
         choices=[
@@ -156,6 +185,8 @@ class CoffeeForm(FlaskForm):
     recommended_brew = StringField(
         "Recommended Brewing Methods (comma separated)", validators=[Optional()]
     )
+
+    harvest_date = StringField("Harvest Date", validators=[Optional()])
 
     image = FileField(
         "Image", validators=[FileAllowed(["jpg", "jpeg", "png"], "Images only!")]

@@ -9,8 +9,8 @@ from flask import (
     current_app,
 )
 from flask_login import login_required, current_user
-from app.models import User, Coffee, Order, db
-from app.forms import CoffeeForm, UserEditForm
+from app.models import User, Coffee, Order, CoffeeBeans, db
+from app.forms import CoffeeForm, UserEditForm, CoffeeBeansForm
 from werkzeug.utils import secure_filename
 from datetime import datetime
 import os
@@ -59,8 +59,11 @@ def dashboard():
     # Get recent orders
     recent_orders = Order.query.order_by(Order.created_at.desc()).limit(5).all()
 
-    # Get top selling coffees (would need additional data tracking)
+    # Get featured coffees
     top_coffees = Coffee.query.filter_by(is_favorite=True).all()
+
+    # Get featured beans
+    top_beans = CoffeeBeans.query.filter_by(is_favorite=True).all()
 
     return render_template(
         "admin/dashboard.html",
@@ -72,6 +75,7 @@ def dashboard():
         completed_orders=completed_orders,
         recent_orders=recent_orders,
         top_coffees=top_coffees,
+        top_beans=top_beans,
     )
 
 
@@ -126,10 +130,24 @@ def menu():
     return render_template("admin/menu.html", title="Manage Menu", coffees=coffees)
 
 
+@admin_bp.route("/beans")
+@admin_required
+def beans():
+    beans = CoffeeBeans.query.all()
+    return render_template("admin/beans.html", title="Manage Beans", beans=beans)
+
+
 @admin_bp.route("/coffee/new", methods=["GET", "POST"])
 @admin_only
 def new_coffee():
     form = CoffeeForm()
+
+    # Get all beans for the select fields
+    all_beans = CoffeeBeans.query.all()
+    form.beans.choices = [(bean.id, bean.name) for bean in all_beans]
+    form.default_bean_id.choices = [(0, "-- None --")] + [
+        (bean.id, bean.name) for bean in all_beans
+    ]
 
     if form.validate_on_submit():
         # Handle image upload
@@ -150,7 +168,7 @@ def new_coffee():
             # Image path for database is relative to static folder
             image_file = f"uploads/{image_file}"
 
-        # Create new coffee item with enhanced details
+        # Create new coffee item
         coffee = Coffee(
             name=form.name.data,
             description=form.description.data,
@@ -159,20 +177,22 @@ def new_coffee():
             category=form.category.data,
             is_favorite=form.is_favorite.data,
             flavors=form.flavors.data,
-            # Coffee enthusiast details
-            bean_origin=form.bean_origin.data,
-            bean_type=form.bean_type.data,
-            roast_level=form.roast_level.data,
-            processing_method=form.processing_method.data,
-            flavor_notes=form.flavor_notes.data,
-            acidity=form.acidity.data,
-            body=form.body.data,
-            sweetness=form.sweetness.data,
-            recommended_brew=form.recommended_brew.data,
+            default_bean_id=(
+                form.default_bean_id.data if form.default_bean_id.data > 0 else None
+            ),
         )
 
         db.session.add(coffee)
         db.session.commit()
+
+        # Now add the beans (need to add after commit to have a coffee.id)
+        if form.beans.data:
+            for bean_id in form.beans.data:
+                bean = CoffeeBeans.query.get(bean_id)
+                if bean:
+                    coffee.beans.append(bean)
+
+            db.session.commit()
 
         flash("New coffee added successfully!", "success")
         return redirect(url_for("admin.menu"))
@@ -186,6 +206,13 @@ def edit_coffee(id):
     coffee = Coffee.query.get_or_404(id)
     form = CoffeeForm()
 
+    # Get all beans for the select fields
+    all_beans = CoffeeBeans.query.all()
+    form.beans.choices = [(bean.id, bean.name) for bean in all_beans]
+    form.default_bean_id.choices = [(0, "-- None --")] + [
+        (bean.id, bean.name) for bean in all_beans
+    ]
+
     if form.validate_on_submit():
         # Update coffee details
         coffee.name = form.name.data
@@ -194,17 +221,9 @@ def edit_coffee(id):
         coffee.category = form.category.data
         coffee.is_favorite = form.is_favorite.data
         coffee.flavors = form.flavors.data
-
-        # Update coffee enthusiast details
-        coffee.bean_origin = form.bean_origin.data
-        coffee.bean_type = form.bean_type.data
-        coffee.roast_level = form.roast_level.data
-        coffee.processing_method = form.processing_method.data
-        coffee.flavor_notes = form.flavor_notes.data
-        coffee.acidity = form.acidity.data
-        coffee.body = form.body.data
-        coffee.sweetness = form.sweetness.data
-        coffee.recommended_brew = form.recommended_brew.data
+        coffee.default_bean_id = (
+            form.default_bean_id.data if form.default_bean_id.data > 0 else None
+        )
 
         # Handle image upload
         if form.image.data:
@@ -222,6 +241,14 @@ def edit_coffee(id):
             # Image path for database is relative to static folder
             coffee.image = f"uploads/{image_file}"
 
+        # Clear and update beans
+        coffee.beans.clear()
+        if form.beans.data:
+            for bean_id in form.beans.data:
+                bean = CoffeeBeans.query.get(bean_id)
+                if bean:
+                    coffee.beans.append(bean)
+
         db.session.commit()
 
         flash("Coffee updated successfully!", "success")
@@ -235,17 +262,10 @@ def edit_coffee(id):
         form.category.data = coffee.category
         form.is_favorite.data = coffee.is_favorite
         form.flavors.data = coffee.flavors
-
-        # Pre-populate coffee enthusiast details
-        form.bean_origin.data = coffee.bean_origin
-        form.bean_type.data = coffee.bean_type
-        form.roast_level.data = coffee.roast_level
-        form.processing_method.data = coffee.processing_method
-        form.flavor_notes.data = coffee.flavor_notes
-        form.acidity.data = coffee.acidity
-        form.body.data = coffee.body
-        form.sweetness.data = coffee.sweetness
-        form.recommended_brew.data = coffee.recommended_brew
+        form.beans.data = [bean.id for bean in coffee.beans]
+        form.default_bean_id.data = (
+            coffee.default_bean_id if coffee.default_bean_id else 0
+        )
 
     return render_template(
         "admin/coffee_form.html", title="Edit Coffee", form=form, coffee=coffee
@@ -262,6 +282,157 @@ def delete_coffee(id):
 
     flash("Coffee deleted successfully!", "success")
     return redirect(url_for("admin.menu"))
+
+
+@admin_bp.route("/bean/new", methods=["GET", "POST"])
+@admin_only
+def new_bean():
+    form = CoffeeBeansForm()
+
+    if form.validate_on_submit():
+        # Handle image upload
+        image_file = "beans_default.jpg"
+
+        if form.image.data:
+            f = form.image.data
+            filename = secure_filename(f.filename)
+            # Add random string to filename to prevent duplicates
+            random_hex = uuid.uuid4().hex
+            _, file_extension = os.path.splitext(filename)
+            image_file = random_hex + file_extension
+
+            # Save the file
+            file_path = os.path.join(current_app.static_folder, "uploads", image_file)
+            f.save(file_path)
+
+            # Image path for database is relative to static folder
+            image_file = f"uploads/{image_file}"
+
+        # Create new coffee bean
+        bean = CoffeeBeans(
+            name=form.name.data,
+            description=form.description.data,
+            price=form.price.data,
+            image=image_file,
+            is_favorite=form.is_favorite.data,
+            origin=form.origin.data,
+            bean_type=form.bean_type.data,
+            roast_level=form.roast_level.data,
+            processing_method=form.processing_method.data,
+            flavor_notes=form.flavor_notes.data,
+            acidity=form.acidity.data,
+            body=form.body.data,
+            sweetness=form.sweetness.data,
+            recommended_brew=form.recommended_brew.data,
+            harvest_date=form.harvest_date.data,
+        )
+
+        db.session.add(bean)
+        db.session.commit()
+
+        flash("New coffee bean added successfully!", "success")
+        return redirect(url_for("admin.beans"))
+
+    return render_template(
+        "admin/bean_form.html", title="Add New Coffee Bean", form=form
+    )
+
+
+@admin_bp.route("/bean/edit/<int:id>", methods=["GET", "POST"])
+@admin_only
+def edit_bean(id):
+    bean = CoffeeBeans.query.get_or_404(id)
+    form = CoffeeBeansForm()
+
+    if form.validate_on_submit():
+        # Update bean details
+        bean.name = form.name.data
+        bean.description = form.description.data
+        bean.price = form.price.data
+        bean.is_favorite = form.is_favorite.data
+        bean.origin = form.origin.data
+        bean.bean_type = form.bean_type.data
+        bean.roast_level = form.roast_level.data
+        bean.processing_method = form.processing_method.data
+        bean.flavor_notes = form.flavor_notes.data
+        bean.acidity = form.acidity.data
+        bean.body = form.body.data
+        bean.sweetness = form.sweetness.data
+        bean.recommended_brew = form.recommended_brew.data
+        bean.harvest_date = form.harvest_date.data
+
+        # Handle image upload
+        if form.image.data:
+            f = form.image.data
+            filename = secure_filename(f.filename)
+            # Add random string to filename to prevent duplicates
+            random_hex = uuid.uuid4().hex
+            _, file_extension = os.path.splitext(filename)
+            image_file = random_hex + file_extension
+
+            # Save the file
+            file_path = os.path.join(current_app.static_folder, "uploads", image_file)
+            f.save(file_path)
+
+            # Image path for database is relative to static folder
+            bean.image = f"uploads/{image_file}"
+
+        db.session.commit()
+
+        flash("Coffee bean updated successfully!", "success")
+        return redirect(url_for("admin.beans"))
+
+    # Pre-populate form with existing data
+    if request.method == "GET":
+        form.name.data = bean.name
+        form.description.data = bean.description
+        form.price.data = bean.price
+        form.is_favorite.data = bean.is_favorite
+        form.origin.data = bean.origin
+        form.bean_type.data = bean.bean_type
+        form.roast_level.data = bean.roast_level
+        form.processing_method.data = bean.processing_method
+        form.flavor_notes.data = bean.flavor_notes
+        form.acidity.data = bean.acidity
+        form.body.data = bean.body
+        form.sweetness.data = bean.sweetness
+        form.recommended_brew.data = bean.recommended_brew
+        form.harvest_date.data = bean.harvest_date
+
+    return render_template(
+        "admin/bean_form.html", title="Edit Coffee Bean", form=form, bean=bean
+    )
+
+
+@admin_bp.route("/bean/delete/<int:id>", methods=["POST"])
+@admin_only
+def delete_bean(id):
+    bean = CoffeeBeans.query.get_or_404(id)
+
+    # Check if any coffee drinks are using this bean
+    if bean.coffees:
+        flash(
+            f"Cannot delete this bean because it is used by {len(bean.coffees)} coffee drinks. Remove the association first.",
+            "danger",
+        )
+        return redirect(url_for("admin.beans"))
+
+    # Check if any coffee has this as default bean
+    default_bean_coffees = Coffee.query.filter_by(default_bean_id=bean.id).all()
+    if default_bean_coffees:
+        for coffee in default_bean_coffees:
+            coffee.default_bean_id = None
+
+        flash(
+            f"Removed this bean as the default bean from {len(default_bean_coffees)} coffee drinks.",
+            "warning",
+        )
+
+    db.session.delete(bean)
+    db.session.commit()
+
+    flash("Coffee bean deleted successfully!", "success")
+    return redirect(url_for("admin.beans"))
 
 
 @admin_bp.route("/users")

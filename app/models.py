@@ -51,21 +51,25 @@ class User(UserMixin, db.Model):
         return self.username
 
 
-class Coffee(db.Model):
+# Many-to-many relationship between Coffee and CoffeeBeans
+coffee_beans_association = db.Table(
+    "coffee_beans_association",
+    db.Column("coffee_id", db.Integer, db.ForeignKey("coffee.id")),
+    db.Column("bean_id", db.Integer, db.ForeignKey("coffee_beans.id")),
+)
+
+
+class CoffeeBeans(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text, nullable=False)
-    price = db.Column(db.Float, nullable=False)
-    image = db.Column(db.String(255), nullable=False, default="coffee_default.jpg")
-    category = db.Column(db.String(50), nullable=False, default="coffee")
+    image = db.Column(db.String(255), nullable=False, default="beans_default.jpg")
     is_favorite = db.Column(db.Boolean, default=False)
+    price = db.Column(db.Float, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    flavors = db.Column(
-        db.String(255), nullable=True
-    )  # Stored as comma-separated string
 
-    # Coffee enthusiast details
-    bean_origin = db.Column(db.String(100), nullable=True)
+    # Coffee bean specific details
+    origin = db.Column(db.String(100), nullable=True)
     bean_type = db.Column(
         db.String(100), nullable=True
     )  # Arabica, Robusta, Blend, etc.
@@ -82,6 +86,62 @@ class Coffee(db.Model):
     recommended_brew = db.Column(
         db.String(255), nullable=True
     )  # Recommended brewing methods
+    harvest_date = db.Column(
+        db.String(50), nullable=True
+    )  # When the beans were harvested
+
+    # Coffees that use this bean
+    coffees = db.relationship(
+        "Coffee", secondary=coffee_beans_association, back_populates="beans"
+    )
+
+    def __repr__(self):
+        return f"<CoffeeBeans {self.name}>"
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "image": self.image,
+            "is_favorite": self.is_favorite,
+            "price": self.price,
+            "origin": self.origin,
+            "bean_type": self.bean_type,
+            "roast_level": self.roast_level,
+            "processing_method": self.processing_method,
+            "flavor_notes": self.flavor_notes,
+            "acidity": self.acidity,
+            "body": self.body,
+            "sweetness": self.sweetness,
+            "recommended_brew": self.recommended_brew,
+            "harvest_date": self.harvest_date,
+        }
+
+
+class Coffee(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    price = db.Column(db.Float, nullable=False)
+    image = db.Column(db.String(255), nullable=False, default="coffee_default.jpg")
+    category = db.Column(db.String(50), nullable=False, default="coffee")
+    is_favorite = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    flavors = db.Column(
+        db.String(255), nullable=True
+    )  # Stored as comma-separated string
+
+    # Relationship with beans - a coffee can be made with multiple bean types
+    beans = db.relationship(
+        "CoffeeBeans", secondary=coffee_beans_association, back_populates="coffees"
+    )
+
+    # Default bean recommendation for this coffee
+    default_bean_id = db.Column(
+        db.Integer, db.ForeignKey("coffee_beans.id"), nullable=True
+    )
+    default_bean = db.relationship("CoffeeBeans", foreign_keys=[default_bean_id])
 
     def __repr__(self):
         return f"<Coffee {self.name}>"
@@ -96,15 +156,8 @@ class Coffee(db.Model):
             "category": self.category,
             "is_favorite": self.is_favorite,
             "flavors": self.flavors.split(",") if self.flavors else [],
-            "bean_origin": self.bean_origin,
-            "bean_type": self.bean_type,
-            "roast_level": self.roast_level,
-            "processing_method": self.processing_method,
-            "flavor_notes": self.flavor_notes,
-            "acidity": self.acidity,
-            "body": self.body,
-            "sweetness": self.sweetness,
-            "recommended_brew": self.recommended_brew,
+            "beans": [bean.to_dict() for bean in self.beans] if self.beans else [],
+            "default_bean_id": self.default_bean_id,
         }
 
 

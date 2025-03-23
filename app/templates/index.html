@@ -47,7 +47,7 @@
 <!-- Featured Coffees -->
 <section class="py-5">
     <div class="container">
-        <h2 class="text-center mb-4">Family Favorites</h2>
+        <h2 class="text-center mb-4">Family Favorite Drinks</h2>
         <p class="text-center text-muted mb-5">These coffee drinks are our family's most loved choices.</p>
         
         <div class="row">
@@ -55,7 +55,7 @@
             <div class="col-md-4">
                 <div class="coffee-card" data-id="{{ coffee.id }}" data-price="{{ coffee.price }}">
                     <div class="coffee-img-container">
-                        <img src="{{ url_for('static', filename='img/' + coffee.image) }}" alt="{{ coffee.name }}" class="coffee-img">
+                        <img src="{{ url_for('static', filename=coffee.image) }}" alt="{{ coffee.name }}" class="coffee-img">
                         <span class="coffee-badge">Family Favorite</span>
                     </div>
                     <div class="card-body">
@@ -74,6 +74,17 @@
                             </div>
                         </div>
                         
+                        {% if coffee.beans %}
+                        <div class="mb-3">
+                            <small class="text-muted d-block mb-1">Available with:</small>
+                            <div class="d-flex flex-wrap">
+                                {% for bean in coffee.beans %}
+                                <span class="badge bg-light text-dark border me-1 mb-1">{{ bean.name }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        
                         <a href="{{ url_for('main.menu') }}#coffee-{{ coffee.id }}" class="btn btn-primary w-100">
                             <i class="fas fa-info-circle me-2"></i>View Details
                         </a>
@@ -85,8 +96,69 @@
     </div>
 </section>
 
-<!-- How It Works -->
+<!-- Featured Beans -->
 <section class="py-5 bg-light">
+    <div class="container">
+        <h2 class="text-center mb-4">Premium Coffee Beans</h2>
+        <p class="text-center text-muted mb-5">Discover our selection of high-quality coffee beans from around the world.</p>
+        
+        <div class="row">
+            {% for bean in featured_beans %}
+            <div class="col-md-4">
+                <div class="coffee-card h-100">
+                    <div class="coffee-img-container">
+                        <img src="{{ url_for('static', filename=bean.image) }}" alt="{{ bean.name }}" class="coffee-img">
+                        {% if bean.is_favorite %}
+                        <span class="coffee-badge">Family Favorite</span>
+                        {% endif %}
+                    </div>
+                    <div class="card-body">
+                        <h3 class="coffee-title">{{ bean.name }}</h3>
+                        
+                        <div class="d-flex align-items-center mb-3">
+                            {% if bean.origin %}
+                            <span class="badge bg-secondary me-2">{{ bean.origin }}</span>
+                            {% endif %}
+                            
+                            {% if bean.roast_level %}
+                            <span class="badge bg-{{ bean.roast_level|replace('light', 'warning')|replace('medium', 'info')|replace('dark', 'dark') }}">
+                                {{ bean.roast_level|replace('_', '-')|capitalize }}
+                            </span>
+                            {% endif %}
+                        </div>
+                        
+                        <p class="coffee-desc">{{ bean.description|truncate(100) }}</p>
+                        
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <span class="coffee-price">${{ "%.2f"|format(bean.price) }}</span>
+                            
+                            {% if bean.processing_method %}
+                            <span class="flavor-profile">{{ bean.processing_method|replace('_', '-')|capitalize }}</span>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-flex">
+                            <a href="{{ url_for('main.bean_detail', bean_id=bean.id) }}" class="btn btn-outline-primary me-2 flex-grow-1">
+                                <i class="fas fa-info-circle me-2"></i>Bean Details
+                            </a>
+                            <a href="{{ url_for('main.menu', bean_id=bean.id) }}" class="btn btn-primary flex-grow-1">
+                                <i class="fas fa-coffee me-2"></i>View Drinks
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="text-center mt-4">
+            <a href="{{ url_for('main.beans') }}" class="btn btn-lg btn-outline-primary">View All Coffee Beans</a>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works -->
+<section class="py-5">
     <div class="container">
         <h2 class="text-center mb-4">How It Works</h2>
         <p class="text-center text-muted mb-5">Order your favorite coffee in three simple steps.</p>
@@ -95,10 +167,10 @@
             <div class="col-md-4 mb-4">
                 <div class="feature-card">
                     <div class="feature-icon">
-                        <i class="fas fa-user"></i>
+                        <i class="fas fa-seedling"></i>
                     </div>
-                    <h3 class="feature-title">1. Select Family Member</h3>
-                    <p>Choose your name from the dropdown menu so we know who's ordering.</p>
+                    <h3 class="feature-title">1. Choose Your Bean</h3>
+                    <p>Start by selecting a premium coffee bean that matches your taste preferences.</p>
                 </div>
             </div>
             
@@ -107,8 +179,8 @@
                     <div class="feature-icon">
                         <i class="fas fa-coffee"></i>
                     </div>
-                    <h3 class="feature-title">2. Customize Your Coffee</h3>
-                    <p>Choose your favorite coffee, size, milk, sugar, and any extras.</p>
+                    <h3 class="feature-title">2. Select Your Drink</h3>
+                    <p>Choose your favorite coffee preparation with customized options.</p>
                 </div>
             </div>
             
@@ -126,7 +198,7 @@
 </section>
 
 <!-- Coffee Hours & Special Notes -->
-<section class="py-5">
+<section class="py-5 bg-light">
     <div class="container">
         <div class="row align-items-center">
             <div class="col-md-6 mb-4 mb-md-0">
@@ -148,6 +220,29 @@
                     </div>
                 </div>
             </div>
+            
+            <div class="col-md-6">
+                <h2 class="mb-4">Bean of the Month</h2>
+                <div class="card">
+                    <div class="card-body">
+                        {% if featured_beans and featured_beans|length > 0 %}
+                        <div class="d-flex align-items-center">
+                            <div class="me-3">
+                                <img src="{{ url_for('static', filename=featured_beans[0].image) }}" alt="{{ featured_beans[0].name }}" class="rounded-circle" style="width: 80px; height: 80px; object-fit: cover;">
+                            </div>
+                            <div>
+                                <h4 class="mb-1">{{ featured_beans[0].name }}</h4>
+                                <p class="mb-2 text-muted">{{ featured_beans[0].origin }} • {{ featured_beans[0].roast_level|replace('_', '-')|capitalize }} Roast</p>
+                                <a href="{{ url_for('main.bean_detail', bean_id=featured_beans[0].id) }}" class="btn btn-sm btn-outline-primary">Learn More</a>
+                            </div>
+                        </div>
+                        {% else %}
+                        <p class="text-center">No featured bean available at this time.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </section>
 

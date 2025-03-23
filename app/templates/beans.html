@@ -1,65 +1,121 @@
 {% extends "base.html" %}
 
 {% block content %}
-
-    
-        Coffee Bean Selection
-        Start by choosing your favorite coffee bean.
-    
-
-
-
-    
-        {% if beans %}
+<!-- Beans Header -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <h1 class="text-center mb-3">Coffee Bean Selection</h1>
+        <p class="text-center text-muted mb-5">Start by choosing your favorite coffee bean.</p>
         
+        <!-- Filter controls -->
+        <div class="row mb-5">
+            <div class="col-md-8 mx-auto">
+                <div class="d-flex justify-content-center flex-wrap">
+                    <a href="{{ url_for('main.beans') }}" class="btn {% if selected_origin == 'all' and selected_roast == 'all' %}btn-primary{% else %}btn-outline-primary{% endif %} me-2 mb-2">
+                        All Beans
+                    </a>
+                    
+                    <div class="dropdown me-2 mb-2">
+                        <button class="btn {% if selected_origin != 'all' %}btn-primary{% else %}btn-outline-primary{% endif %} dropdown-toggle" type="button" id="originDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            Origin: {% if selected_origin != 'all' %}{{ selected_origin }}{% else %}All{% endif %}
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="originDropdown">
+                            <li><a class="dropdown-item {% if selected_origin == 'all' %}active{% endif %}" href="{{ url_for('main.beans', roast=selected_roast) }}">All Origins</a></li>
+                            {% for origin in origins %}
+                            <li><a class="dropdown-item {% if selected_origin == origin %}active{% endif %}" href="{{ url_for('main.beans', origin=origin, roast=selected_roast) }}">{{ origin }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    
+                    <div class="dropdown mb-2">
+                        <button class="btn {% if selected_roast != 'all' %}btn-primary{% else %}btn-outline-primary{% endif %} dropdown-toggle" type="button" id="roastDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            Roast: {% if selected_roast != 'all' %}{{ selected_roast|replace('_', '-')|capitalize }}{% else %}All{% endif %}
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="roastDropdown">
+                            <li><a class="dropdown-item {% if selected_roast == 'all' %}active{% endif %}" href="{{ url_for('main.beans', origin=selected_origin) }}">All Roasts</a></li>
+                            {% for roast in roast_levels %}
+                            <li><a class="dropdown-item {% if selected_roast == roast %}active{% endif %}" href="{{ url_for('main.beans', origin=selected_origin, roast=roast) }}">{{ roast|replace('_', '-')|capitalize }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Beans Selection -->
+<section class="py-5">
+    <div class="container">
+        {% if beans %}
+        <div class="row">
             {% for bean in beans %}
-            
-                
-                    
-                        
+            <div class="col-lg-4 mb-4">
+                <div class="coffee-card h-100">
+                    <div class="coffee-img-container">
+                        <img src="{{ url_for('static', filename=bean.image) }}" alt="{{ bean.name }}" class="coffee-img">
                         {% if bean.is_favorite %}
-                        Family Favorite
+                        <span class="coffee-badge">Family Favorite</span>
                         {% endif %}
-                    
-                    
-                        {{ bean.name }}
+                    </div>
+                    <div class="card-body">
+                        <h3 class="coffee-title">{{ bean.name }}</h3>
                         
-                        
-                            {% if bean.bean_origin %}
-                            Origin: {{ bean.bean_origin }}
+                        <div class="d-flex align-items-center mb-3">
+                            {% if bean.origin %}
+                            <span class="badge bg-secondary me-2">Origin: {{ bean.origin }}</span>
                             {% endif %}
                             
                             {% if bean.roast_level %}
-                            Roast: {{ bean.roast_level|replace('_', '-')|capitalize }}
+                            <span class="badge bg-{{ bean.roast_level|replace('light', 'warning')|replace('medium', 'info')|replace('dark', 'dark') }}">
+                                {{ bean.roast_level|replace('_', '-')|capitalize }} Roast
+                            </span>
                             {% endif %}
+                        </div>
                         
+                        <p class="coffee-desc">{{ bean.description }}</p>
                         
+                        {% if bean.flavor_notes %}
+                        <div class="mb-3">
+                            <small class="text-muted">Flavor Profile:</small>
+                            <p class="mb-0 mt-1">{{ bean.flavor_notes }}</p>
+                        </div>
+                        {% endif %}
                         
-                            {% if bean.flavors %}
-                                {% set flavor_list = bean.flavors.split(',') %}
-                                {% for flavor in flavor_list %}
-                                    {{ flavor.strip() }}
-                                {% endfor %}
-                            {% endif %}
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <span class="coffee-price">${{ "%.2f"|format(bean.price) }}</span>
+                            
+                            <div>
+                                {% if bean.processing_method %}
+                                <span class="flavor-profile">{{ bean.processing_method|replace('_', '-')|capitalize }}</span>
+                                {% endif %}
+                                
+                                {% if bean.bean_type %}
+                                <span class="flavor-profile">{{ bean.bean_type|capitalize }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
                         
-                        
-                        {{ bean.description }}
-                        
-                        
-                            Explore Bean
-                        
-                    
-                
-            
+                        <div class="d-flex">
+                            <a href="{{ url_for('main.bean_detail', bean_id=bean.id) }}" class="btn btn-outline-primary me-2 flex-grow-1">
+                                <i class="fas fa-info-circle me-2"></i>Bean Details
+                            </a>
+                            <a href="{{ url_for('main.menu', bean_id=bean.id) }}" class="btn btn-primary flex-grow-1">
+                                <i class="fas fa-coffee me-2"></i>Explore Coffee Drinks
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
             {% endfor %}
-        
+        </div>
         {% else %}
-        
-            
-            No coffee beans available
-            Check back soon for updated bean inventory.
-        
+        <div class="text-center py-5">
+            <i class="fas fa-seedling fa-3x mb-3 text-muted"></i>
+            <h3>No coffee beans available</h3>
+            <p class="text-muted">Check back soon for updated bean inventory.</p>
+        </div>
         {% endif %}
-    
-
+    </div>
+</section>
 {% endblock %}

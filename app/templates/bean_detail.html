@@ -1,192 +1,254 @@
 {% extends "base.html" %}
 
 {% block content %}
-
-    
-        
-            
+<!-- Bean Hero Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-5 mb-4 mb-md-0">
+                <div class="coffee-img-container rounded">
+                    <img src="{{ url_for('static', filename=bean.image) }}" alt="{{ bean.name }}" class="coffee-img rounded">
+                </div>
+            </div>
+            <div class="col-md-7">
+                <h1 class="mb-3">{{ bean.name }}</h1>
+                <p class="lead mb-4">{{ bean.description }}</p>
                 
-            
-            
-                {{ coffee.name }}
-                {{ coffee.description }}
-                
-                
-                    {% if coffee.flavors %}
-                        {% set flavor_list = coffee.flavors.split(',') %}
-                        {% for flavor in flavor_list %}
-                            {{ flavor.strip() }}
-                        {% endfor %}
+                <div class="d-flex flex-wrap mb-4">
+                    {% if bean.origin %}
+                    <span class="flavor-profile me-2 mb-2">Origin: {{ bean.origin }}</span>
                     {% endif %}
+                    
+                    {% if bean.roast_level %}
+                    <span class="flavor-profile me-2 mb-2">{{ bean.roast_level|replace('_', '-')|capitalize }} Roast</span>
+                    {% endif %}
+                    
+                    {% if bean.bean_type %}
+                    <span class="flavor-profile me-2 mb-2">{{ bean.bean_type|capitalize }}</span>
+                    {% endif %}
+                    
+                    {% if bean.processing_method %}
+                    <span class="flavor-profile me-2 mb-2">{{ bean.processing_method|replace('_', '-')|capitalize }}</span>
+                    {% endif %}
+                </div>
                 
-            
-        
-    
+                <div class="d-flex align-items-center mb-4">
+                    <span class="coffee-price me-3">${{ "%.2f"|format(bean.price) }}</span>
+                    <a href="{{ url_for('main.menu', bean_id=bean.id) }}" class="btn btn-primary">
+                        <i class="fas fa-coffee me-2"></i>Order Drinks With This Bean
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 
-
-
-    
-        
-            
-                
-                    
-                        Bean Details
-                    
-                    
-                        
-                            {% if coffee.bean_origin %}
-                            
-                                Origin
-                                {{ coffee.bean_origin }}
-                            
+<!-- Bean Details Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8">
+                <!-- Bean Characteristics -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h4 class="mb-0">Bean Details</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            {% if bean.origin %}
+                            <div class="col-md-6 mb-3">
+                                <h6 class="text-muted">Origin</h6>
+                                <p class="mb-0">{{ bean.origin }}</p>
+                            </div>
                             {% endif %}
                             
-                            {% if coffee.bean_type %}
-                            
-                                Bean Type
-                                {{ coffee.bean_type|capitalize }}
-                            
+                            {% if bean.bean_type %}
+                            <div class="col-md-6 mb-3">
+                                <h6 class="text-muted">Bean Type</h6>
+                                <p class="mb-0">{{ bean.bean_type|capitalize }}</p>
+                            </div>
                             {% endif %}
                             
-                            {% if coffee.roast_level %}
-                            
-                                Roast Level
-                                {{ coffee.roast_level|replace('_', '-')|capitalize }}
-                            
+                            {% if bean.roast_level %}
+                            <div class="col-md-6 mb-3">
+                                <h6 class="text-muted">Roast Level</h6>
+                                <p class="mb-0">{{ bean.roast_level|replace('_', '-')|capitalize }}</p>
+                            </div>
                             {% endif %}
                             
-                            {% if coffee.processing_method %}
-                            
-                                Processing
-                                {{ coffee.processing_method|replace('_', '-')|capitalize }}
-                            
+                            {% if bean.processing_method %}
+                            <div class="col-md-6 mb-3">
+                                <h6 class="text-muted">Processing</h6>
+                                <p class="mb-0">{{ bean.processing_method|replace('_', '-')|capitalize }}</p>
+                            </div>
                             {% endif %}
-                        
-                    
+                            
+                            {% if bean.harvest_date %}
+                            <div class="col-md-6 mb-3">
+                                <h6 class="text-muted">Harvest Date</h6>
+                                <p class="mb-0">{{ bean.harvest_date }}</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
                 
-                
-                
-                    
-                        Flavor Profile
-                    
-                    
-                        {% if coffee.flavor_notes %}
-                        {{ coffee.flavor_notes }}
+                <!-- Flavor Profile -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h4 class="mb-0">Flavor Profile</h4>
+                    </div>
+                    <div class="card-body">
+                        {% if bean.flavor_notes %}
+                        <p>{{ bean.flavor_notes }}</p>
                         {% endif %}
                         
-                        
-                            {% if coffee.acidity %}
-                            
-                                Acidity
-                                
-                                    
-                                        
-                                    
-                                
-                                {{ coffee.acidity|replace('_', '-')|capitalize }}
-                            
+                        <div class="row mt-4">
+                            {% if bean.acidity %}
+                            <div class="col-md-4 mb-3">
+                                <h6 class="text-muted">Acidity</h6>
+                                <div class="d-flex align-items-center">
+                                    <div class="attribute-meter me-2">
+                                        <div class="attribute-fill attribute-{{ bean.acidity }}"></div>
+                                    </div>
+                                    <span>{{ bean.acidity|replace('_', '-')|capitalize }}</span>
+                                </div>
+                            </div>
                             {% endif %}
                             
-                            {% if coffee.body %}
-                            
-                                Body
-                                
-                                    
-                                        
-                                    
-                                
-                                {{ coffee.body|replace('_', '-')|capitalize }}
-                            
+                            {% if bean.body %}
+                            <div class="col-md-4 mb-3">
+                                <h6 class="text-muted">Body</h6>
+                                <div class="d-flex align-items-center">
+                                    <div class="attribute-meter me-2">
+                                        <div class="attribute-fill attribute-{{ bean.body }}"></div>
+                                    </div>
+                                    <span>{{ bean.body|replace('_', '-')|capitalize }}</span>
+                                </div>
+                            </div>
                             {% endif %}
                             
-                            {% if coffee.sweetness %}
-                            
-                                Sweetness
-                                
-                                    
-                                        
-                                    
-                                
-                                {{ coffee.sweetness|replace('_', '-')|capitalize }}
-                            
+                            {% if bean.sweetness %}
+                            <div class="col-md-4 mb-3">
+                                <h6 class="text-muted">Sweetness</h6>
+                                <div class="d-flex align-items-center">
+                                    <div class="attribute-meter me-2">
+                                        <div class="attribute-fill attribute-{{ bean.sweetness }}"></div>
+                                    </div>
+                                    <span>{{ bean.sweetness|replace('_', '-')|capitalize }}</span>
+                                </div>
+                            </div>
                             {% endif %}
-                        
-                    
+                        </div>
+                    </div>
+                </div>
                 
-            
-            
-            
-                
-                    
-                        Recommended Brewing Methods
-                    
-                    
-                        {% if brewing_methods %}
-                        
-                            {% for method in brewing_methods %}
-                            
-                                
-                                    
-                                        
-                                            
-                                            {{ method }}
-                                            View drinks
-                                        
-                                    
-                                
-                            
+                <!-- Compatible Coffees -->
+                {% if compatible_coffees %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h4 class="mb-0">Compatible Coffee Drinks</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            {% for coffee in compatible_coffees %}
+                            <div class="col-md-6 col-lg-4 mb-3">
+                                <a href="{{ url_for('main.menu') }}#coffee-{{ coffee.id }}" class="text-decoration-none">
+                                    <div class="card h-100 border-hover">
+                                        <div class="card-body d-flex flex-column align-items-center text-center">
+                                            <div class="coffee-img-container rounded-circle mb-3" style="width: 80px; height: 80px;">
+                                                <img src="{{ url_for('static', filename=coffee.image) }}" alt="{{ coffee.name }}" class="coffee-img">
+                                            </div>
+                                            <h5 class="card-title mb-1">{{ coffee.name }}</h5>
+                                            <span class="text-muted small">{{ coffee.category|capitalize }}</span>
+                                            <span class="badge bg-primary mt-2">${{ "%.2f"|format(coffee.price) }}</span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
                             {% endfor %}
+                        </div>
                         
-                        {% else %}
-                        No specific brewing recommendations available.
-                        {% endif %}
-                        
-                        
-                            
-                                View All Coffee Drinks
-                            
-                        
-                    
-                
-                
-                {% if similar_coffees %}
-                
-                    
-                        Similar Coffees
-                    
-                    
-                        
-                            {% for similar in similar_coffees %}
-                            
-                                
-                                    
-                                        
-                                            
-                                                
-                                            
-                                            
-                                                
-                                                    {{ similar.name }}
-                                                    {{ similar.bean_origin }}
-                                                
-                                            
-                                        
-                                    
-                                
-                            
-                            {% endfor %}
-                        
-                    
-                
+                        <div class="text-center mt-3">
+                            <a href="{{ url_for('main.menu', bean_id=bean.id) }}" class="btn btn-primary">
+                                View All Coffee Drinks With This Bean
+                            </a>
+                        </div>
+                    </div>
+                </div>
                 {% endif %}
+            </div>
             
-        
-    
-
+            <div class="col-lg-4">
+                <!-- Recommended Brewing Methods -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h4 class="mb-0">Recommended Brewing Methods</h4>
+                    </div>
+                    <div class="card-body">
+                        {% if brewing_methods %}
+                        <div class="row">
+                            {% for method in brewing_methods %}
+                            <div class="col-6 mb-3">
+                                <a href="{{ url_for('main.brew_method', method=method) }}" class="brew-method-card">
+                                    <div class="card h-100 text-center p-3">
+                                        <div class="mb-2">
+                                            <i class="fas {% if method == 'Espresso' %}fa-bolt{% elif method == 'French Press' %}fa-glass{% elif method == 'Pour Over' %}fa-filter{% elif method == 'Cold Brew' %}fa-snowflake{% elif method == 'Aeropress' %}fa-compress{% else %}fa-coffee{% endif %} fa-2x text-primary"></i>
+                                        </div>
+                                        <h6 class="mb-0">{{ method }}</h6>
+                                        <small class="text-muted">View drinks</small>
+                                    </div>
+                                </a>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-muted text-center mb-0">No specific brewing recommendations available.</p>
+                        {% endif %}
+                        
+                        <div class="text-center mt-3">
+                            <a href="{{ url_for('main.menu') }}" class="btn btn-outline-primary">
+                                <i class="fas fa-coffee me-2"></i>View All Coffee Drinks
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if similar_beans %}
+                <!-- Similar Beans -->
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="mb-0">Similar Beans</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group">
+                            {% for similar in similar_beans %}
+                            <a href="{{ url_for('main.bean_detail', bean_id=similar.id) }}" class="list-group-item list-group-item-action">
+                                <div class="d-flex">
+                                    <div class="me-3">
+                                        <div class="coffee-img-container rounded-circle" style="width: 50px; height: 50px;">
+                                            <img src="{{ url_for('static', filename=similar.image) }}" alt="{{ similar.name }}" class="coffee-img">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1">{{ similar.name }}</h6>
+                                        <small class="text-muted">{{ similar.origin }}</small>
+                                    </div>
+                                </div>
+                            </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
 {% endblock %}
 
 {% block extra_css %}
-
+<style>
 .attribute-meter {
     width: 50px;
     height: 10px;
@@ -223,4 +285,12 @@
     box-shadow: 0 10px 20px rgba(0,0,0,0.1);
 }
 
+.border-hover {
+    transition: all 0.3s ease;
+}
+.border-hover:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+</style>
 {% endblock %}

@@ -21,19 +21,28 @@ main_bp = Blueprint("main", __name__)
 @main_bp.route("/")
 def index():
     featured_coffees = Coffee.query.filter_by(is_favorite=True).all()
-    return render_template("index.html", featured_coffees=featured_coffees)
+    featured_beans = CoffeeBeans.query.filter_by(is_favorite=True).all()
+    return render_template(
+        "index.html", featured_coffees=featured_coffees, featured_beans=featured_beans
+    )
 
 
 @main_bp.route("/menu")
 def menu():
     # Filter by category if specified
     category = request.args.get("category", "all")
+    bean_id = request.args.get("bean_id")
 
     # Base query
     query = Coffee.query
 
     if category != "all":
         query = query.filter_by(category=category)
+
+    # If a bean is selected, filter coffees that use this bean
+    if bean_id:
+        bean = CoffeeBeans.query.get_or_404(int(bean_id))
+        query = query.join(Coffee.beans).filter(CoffeeBeans.id == bean.id)
 
     # Get coffees
     coffees = query.all()
@@ -42,8 +51,15 @@ def menu():
     categories = db.session.query(Coffee.category).distinct().all()
     categories = [c[0] for c in categories]  # Unpack tuples
 
+    # If a bean was selected, pass it to the template
+    selected_bean = CoffeeBeans.query.get(bean_id) if bean_id else None
+
     return render_template(
-        "menu.html", coffees=coffees, categories=categories, selected_category=category
+        "menu.html",
+        coffees=coffees,
+        categories=categories,
+        selected_category=category,
+        selected_bean=selected_bean,
     )
 
 
@@ -117,6 +133,12 @@ def get_coffee_api(coffee_id):
     return jsonify(coffee.to_dict())
 
 
+@main_bp.route("/api/coffeebeans/<int:bean_id>")
+def get_bean_api(bean_id):
+    bean = CoffeeBeans.query.get_or_404(bean_id)
+    return jsonify(bean.to_dict())
+
+
 @main_bp.route("/api/orders")
 @login_required
 def get_orders():
@@ -182,42 +204,117 @@ def cancel_order(order_id):
 @main_bp.route("/beans")
 def beans():
     """Display available coffee beans for selection"""
-    beans = Coffee.query.filter(Coffee.bean_origin.isnot(None)).all()
-    return render_template("beans.html", beans=beans)
+    # Filter by origin or roast level if specified
+    origin = request.args.get("origin", "all")
+    roast = request.args.get("roast", "all")
 
+    # Base query
+    query = CoffeeBeans.query
 
-@main_bp.route("/bean/")
-def bean_detail(coffee_id):
-    """Show details for a specific bean and its recommended brewing methods"""
-    coffee = Coffee.query.get_or_404(coffee_id)
+    if origin != "all":
+        query = query.filter_by(origin=origin)
 
-    # Parse recommended brewing methods
-    brewing_methods = []
-    if coffee.recommended_brew:
-        brewing_methods = [
-            method.strip() for method in coffee.recommended_brew.split(",")
-        ]
+    if roast != "all":
+        query = query.filter_by(roast_level=roast)
 
-    # Find other coffees that use the same brewing methods
-    similar_coffees = []
-    if brewing_methods:
-        # Create a query to find coffees that have any of these brewing methods
-        query = Coffee.query.filter(Coffee.id != coffee_id)
-        for method in brewing_methods:
-            query = query.filter(Coffee.recommended_brew.like(f"%{method}%"))
-        similar_coffees = query.all()
+    beans = query.all()
+
+    # Get unique origins
+    origins = (
+        db.session.query(CoffeeBeans.origin)
+        .filter(CoffeeBeans.origin != None)
+        .distinct()
+        .all()
+    )
+    origins = [o[0] for o in origins if o[0]]  # Unpack tuples and filter None values
+
+    # Get unique roast levels
+    roast_levels = (
+        db.session.query(CoffeeBeans.roast_level)
+        .filter(CoffeeBeans.roast_level != None)
+        .distinct()
+        .all()
+    )
+    roast_levels = [
+        r[0] for r in roast_levels if r[0]
+    ]  # Unpack tuples and filter None values
 
     return render_template(
-        "bean_detail.html",
-        coffee=coffee,
-        brewing_methods=brewing_methods,
-        similar_coffees=similar_coffees,
+        "beans.html",
+        beans=beans,
+        origins=origins,
+        roast_levels=roast_levels,
+        selected_origin=origin,
+        selected_roast=roast,
     )
 
 
-@main_bp.route("/brew-method/")
+@main_bp.route("/bean/<int:bean_id>")
+def bean_detail(bean_id):
+    """Show details for a specific bean and its recommended brewing methods"""
+    bean = CoffeeBeans.query.get_or_404(bean_id)
+
+    # Parse recommended brewing methods
+    brewing_methods = []
+    if bean.recommended_brew:
+        brewing_methods = [
+            method.strip() for method in bean.recommended_brew.split(",")
+        ]
+
+    # Find coffees that use this bean
+    compatible_coffees = (
+        Coffee.query.join(Coffee.beans).filter(CoffeeBeans.id == bean.id).all()
+    )
+
+    # Find similar beans (same origin or roast level)
+    similar_beans = []
+    if bean.origin:
+        similar_beans = (
+            CoffeeBeans.query.filter(
+                CoffeeBeans.id != bean.id, CoffeeBeans.origin == bean.origin
+            )
+            .limit(3)
+            .all()
+        )
+
+    # If we don't have enough similar beans by origin, add some with same roast level
+    if len(similar_beans) < 3 and bean.roast_level:
+        more_beans = (
+            CoffeeBeans.query.filter(
+                CoffeeBeans.id != bean.id,
+                CoffeeBeans.roast_level == bean.roast_level,
+                ~CoffeeBeans.id.in_([b.id for b in similar_beans]),
+            )
+            .limit(3 - len(similar_beans))
+            .all()
+        )
+        similar_beans.extend(more_beans)
+
+    return render_template(
+        "bean_detail.html",
+        bean=bean,
+        brewing_methods=brewing_methods,
+        compatible_coffees=compatible_coffees,
+        similar_beans=similar_beans,
+    )
+
+
+@main_bp.route("/brew-method/<method>")
 def brew_method(method):
     """Show coffees available for a specific brewing method"""
-    # Find all coffees that can be prepared with this method
-    coffees = Coffee.query.filter(Coffee.recommended_brew.like(f"%{method}%")).all()
-    return render_template("brew_method.html", method=method, coffees=coffees)
+    # Find beans that recommend this brewing method
+    beans = CoffeeBeans.query.filter(
+        CoffeeBeans.recommended_brew.like(f"%{method}%")
+    ).all()
+
+    # Find coffees that can be made with these beans
+    coffees = []
+    if beans:
+        for bean in beans:
+            for coffee in bean.coffees:
+                if coffee not in coffees:
+                    coffees.append(coffee)
+
+    return render_template(
+        "brew_method.html", method=method, coffees=coffees, beans=beans
+    )

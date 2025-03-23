@@ -49,7 +49,7 @@ def create_app(config_class=Config):
         db.create_all()
 
         # Add demo data if no data exists
-        from app.models import User, Coffee
+        from app.models import User, Coffee, CoffeeBeans
 
         if not User.query.first():
             create_demo_data(db)
@@ -59,7 +59,7 @@ def create_app(config_class=Config):
 
 def create_demo_data(db):
     # Create a sample admin user
-    from app.models import User, Coffee
+    from app.models import User, Coffee, CoffeeBeans
 
     admin = User(
         username="admin",
@@ -100,6 +100,79 @@ def create_demo_data(db):
         last_name="Family",
     )
     user3.set_password("password")
+
+    # Add sample coffee beans
+    bean1 = CoffeeBeans(
+        name="Ethiopian Yirgacheffe",
+        description="A bright, fruity coffee with floral notes and a tea-like body.",
+        price=14.99,
+        image="bean1.jpg",
+        is_favorite=True,
+        origin="Ethiopia",
+        bean_type="arabica",
+        roast_level="light",
+        processing_method="washed",
+        flavor_notes="Citrus, bergamot, floral with a clean, bright finish",
+        acidity="high",
+        body="light",
+        sweetness="medium_high",
+        recommended_brew="Pour Over, Aeropress, Drip",
+        harvest_date="March-June",
+    )
+
+    bean2 = CoffeeBeans(
+        name="Colombian Supremo",
+        description="A well-balanced coffee with caramel sweetness and nutty undertones.",
+        price=12.99,
+        image="bean2.jpg",
+        is_favorite=False,
+        origin="Colombia",
+        bean_type="arabica",
+        roast_level="medium",
+        processing_method="washed",
+        flavor_notes="Caramel, almond, light citrus acidity with a smooth finish",
+        acidity="medium",
+        body="medium",
+        sweetness="medium",
+        recommended_brew="French Press, Espresso, Drip",
+        harvest_date="October-January",
+    )
+
+    bean3 = CoffeeBeans(
+        name="Sumatra Mandheling",
+        description="Earthy and full-bodied with low acidity and notes of dark chocolate.",
+        price=13.99,
+        image="bean3.jpg",
+        is_favorite=True,
+        origin="Indonesia",
+        bean_type="arabica",
+        roast_level="dark",
+        processing_method="wet_hulled",
+        flavor_notes="Earthy, herbal, dark chocolate, spice",
+        acidity="low",
+        body="full",
+        sweetness="medium_low",
+        recommended_brew="French Press, Espresso, Cold Brew",
+        harvest_date="June-December",
+    )
+
+    bean4 = CoffeeBeans(
+        name="Brazilian Santos",
+        description="Smooth and mild with nutty flavors and a mild acidity.",
+        price=11.99,
+        image="bean2.jpg",
+        is_favorite=False,
+        origin="Brazil",
+        bean_type="arabica",
+        roast_level="medium",
+        processing_method="natural",
+        flavor_notes="Chocolate, nuts, mild fruit with a smooth finish",
+        acidity="low",
+        body="medium",
+        sweetness="medium",
+        recommended_brew="Espresso, Moka Pot, French Press",
+        harvest_date="May-September",
+    )
 
     # Add sample coffee items
     coffee1 = Coffee(
@@ -162,6 +235,32 @@ def create_demo_data(db):
         flavors="Chocolatey,Rich,Sweet",
     )
 
+    # Set up relationships between coffees and beans
+    coffee1.beans.append(bean1)
+    coffee1.beans.append(bean3)
+    coffee1.default_bean = bean3
+
+    coffee2.beans.append(bean1)
+    coffee2.beans.append(bean2)
+    coffee2.default_bean = bean2
+
+    coffee3.beans.append(bean2)
+    coffee3.beans.append(bean4)
+    coffee3.default_bean = bean2
+
+    coffee4.beans.append(bean3)
+    coffee4.beans.append(bean4)
+    coffee4.default_bean = bean3
+
+    coffee5.beans.append(bean1)
+    coffee5.beans.append(bean2)
+    coffee5.beans.append(bean4)
+    coffee5.default_bean = bean2
+
+    coffee6.beans.append(bean2)
+    coffee6.beans.append(bean3)
+    coffee6.default_bean = bean3
+
     # Add all to database
     db.session.add_all(
         [
@@ -170,6 +269,10 @@ def create_demo_data(db):
             user1,
             user2,
             user3,
+            bean1,
+            bean2,
+            bean3,
+            bean4,
             coffee1,
             coffee2,
             coffee3,
